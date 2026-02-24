@@ -69,4 +69,6 @@ fun appModule(supabaseUrl: String, supabaseKey: String) = module {
     singleOf(::ServiceCasesQueryResolver)
     singleOf(::PermitSummaryQueryResolver)
     singleOf(::PoliceIncidentsQueryResolver)
+    singleOf(::ServiceCaseSummaryQueryResolver)
+    singleOf(::PoliceIncidentSummaryQueryResolver)
 }

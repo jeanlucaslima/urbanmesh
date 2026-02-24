@@ -18,7 +18,7 @@ import io.ktor.util.*
 private val PUBLIC_OPERATIONS = setOf(
     "signIn", "signUp", "refreshToken", "supabaseConfig",
     "buildingPermits", "buildingPermit", "serviceCases", "permitSummary",
-    "policeIncidents"
+    "policeIncidents", "serviceCaseSummary", "policeIncidentSummary"
 )
 
 /**

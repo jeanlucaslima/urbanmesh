@@ -218,6 +218,55 @@ class SFDataService(private val httpClient: HttpClient) {
     }
 
     /**
+     * Fetch aggregated 311 service case counts grouped by a SODA column.
+     * Returns a list of category/count pairs.
+     */
+    suspend fun getServiceCaseSummary(groupByColumn: String): List<AggregationDto> {
+        // Allowlist to prevent SoQL injection
+        val safeColumn = when (groupByColumn) {
+            "status_description" -> "status_description"
+            "service_name" -> "service_name"
+            "agency_responsible" -> "agency_responsible"
+            "neighborhood" -> "neighborhood"
+            "supervisor_district" -> "supervisor_district"
+            else -> "status_description"
+        }
+
+        val response = httpClient.get(CASES_URL) {
+            parameter("\$select", "$safeColumn AS category, count(*) AS count")
+            parameter("\$group", safeColumn)
+            parameter("\$order", "count DESC")
+            parameter("\$limit", 50)
+        }
+
+        return json.decodeFromString(response.bodyAsText())
+    }
+
+    /**
+     * Fetch aggregated police incident counts grouped by a SODA column.
+     * Returns a list of category/count pairs.
+     */
+    suspend fun getPoliceIncidentSummary(groupByColumn: String): List<AggregationDto> {
+        // Allowlist to prevent SoQL injection
+        val safeColumn = when (groupByColumn) {
+            "incident_category" -> "incident_category"
+            "resolution" -> "resolution"
+            "analysis_neighborhood" -> "analysis_neighborhood"
+            "supervisor_district" -> "supervisor_district"
+            else -> "incident_category"
+        }
+
+        val response = httpClient.get(INCIDENTS_URL) {
+            parameter("\$select", "$safeColumn AS category, count(*) AS count")
+            parameter("\$group", safeColumn)
+            parameter("\$order", "count DESC")
+            parameter("\$limit", 50)
+        }
+
+        return json.decodeFromString(response.bodyAsText())
+    }
+
+    /**
      * Fetch police incident reports from SF Open Data with optional filtering and pagination.
      */
     suspend fun getPoliceIncidents(

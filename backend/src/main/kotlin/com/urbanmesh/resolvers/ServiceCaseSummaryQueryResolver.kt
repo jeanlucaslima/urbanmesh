@@ -6,19 +6,19 @@ import viaduct.api.Resolver
 import viaduct.api.grts.SummaryItem
 
 /**
- * Resolver for the permitSummary query.
- * Returns aggregated permit counts grouped by a specified field.
- * Supported groupBy values: "status", "permit_type_definition",
- * "neighborhoods_analysis_boundaries", "supervisor_district".
+ * Resolver for the serviceCaseSummary query.
+ * Returns aggregated 311 service case counts grouped by a specified field.
+ * Supported groupBy values: "status_description", "service_name",
+ * "agency_responsible", "neighborhood", "supervisor_district".
  * Public endpoint — no authentication required.
  */
 @Resolver
-class PermitSummaryQueryResolver(
+class ServiceCaseSummaryQueryResolver(
     private val sfDataService: SFDataService
-) : QueryResolvers.PermitSummary() {
+) : QueryResolvers.ServiceCaseSummary() {
     override suspend fun resolve(ctx: Context): List<SummaryItem> {
         val groupBy = ctx.arguments.groupBy
-        val aggregations = sfDataService.getPermitSummary(groupBy)
+        val aggregations = sfDataService.getServiceCaseSummary(groupBy)
 
         return aggregations.mapNotNull { dto ->
             val category = dto.category ?: return@mapNotNull null

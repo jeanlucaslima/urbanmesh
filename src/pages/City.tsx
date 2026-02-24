@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { executePublicGraphQL } from "@/lib/graphql";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
+import { Building2, AlertCircle, ArrowLeft, RefreshCw, Phone, Shield } from "lucide-react";
 import { CityMap } from "@/components/CityMap";
 import "leaflet/dist/leaflet.css";
 
@@ -58,6 +58,24 @@ const SERVICE_CASES_QUERY = `
 const PERMIT_SUMMARY_QUERY = `
   query PermitSummary($groupBy: String!) {
     permitSummary(groupBy: $groupBy) {
+      category
+      count
+    }
+  }
+`;
+
+const SERVICE_CASE_SUMMARY_QUERY = `
+  query ServiceCaseSummary($groupBy: String!) {
+    serviceCaseSummary(groupBy: $groupBy) {
+      category
+      count
+    }
+  }
+`;
+
+const POLICE_INCIDENT_SUMMARY_QUERY = `
+  query PoliceIncidentSummary($groupBy: String!) {
+    policeIncidentSummary(groupBy: $groupBy) {
       category
       count
     }
@@ -130,7 +148,7 @@ interface PoliceIncident {
   longitude?: number;
 }
 
-interface PermitSummary {
+interface SummaryItem {
   category: string;
   count: number;
 }
@@ -171,6 +189,90 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
+// ---- DomainSummaryCard component -------------------------------------------
+
+interface DomainSummaryCardProps {
+  title: string;
+  icon: ReactNode;
+  items: SummaryItem[];
+  loading: boolean;
+  error: string | null;
+  tabValue: string;
+  borderClass: string;
+  badgeBgClass: string;
+  barClass: string;
+  onSelect: (tab: string) => void;
+}
+
+function DomainSummaryCard({
+  title, icon, items, loading, error, tabValue, borderClass, badgeBgClass, barClass, onSelect
+}: DomainSummaryCardProps) {
+  const total = items.reduce((sum, item) => sum + item.count, 0);
+  const top5 = items.slice(0, 5);
+
+  return (
+    <Card
+      className={`border-t-4 ${borderClass} cursor-pointer hover:shadow-md transition-shadow`}
+      onClick={() => onSelect(tabValue)}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2">
+          <div className={`p-1.5 rounded-lg ${badgeBgClass}`}>
+            {icon}
+          </div>
+          <div>
+            <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+            {!loading && !error && (
+              <p className="text-xs text-muted-foreground">{total.toLocaleString()} total</p>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {error ? (
+          <div className="flex items-center gap-2 text-destructive text-xs">
+            <AlertCircle className="h-3 w-3" />
+            Failed to load
+          </div>
+        ) : loading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-1">
+                <Skeleton className="h-3 w-3/4" />
+                <Skeleton className="h-2 w-full" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {top5.map(item => {
+              const pct = total > 0 ? Math.round((item.count / total) * 100) : 0;
+              return (
+                <div key={item.category}>
+                  <div className="flex justify-between text-xs mb-0.5">
+                    <span className="truncate max-w-[70%] capitalize" title={item.category}>
+                      {item.category}
+                    </span>
+                    <span className="text-muted-foreground ml-1 shrink-0">
+                      {item.count.toLocaleString()} ({pct}%)
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${barClass}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ---- Main page -------------------------------------------------------------
 
 const PAGE_SIZE = 20;
@@ -199,10 +301,21 @@ const NEIGHBORHOOD_OPTIONS = [
 ];
 
 const City = () => {
+  // ----- Active tab -----
+  const [activeTab, setActiveTab] = useState("permits");
+
   // ----- Summary state -----
-  const [summary, setSummary] = useState<PermitSummary[]>([]);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [permitSummary, setPermitSummary] = useState<SummaryItem[]>([]);
+  const [permitSummaryLoading, setPermitSummaryLoading] = useState(true);
+  const [permitSummaryError, setPermitSummaryError] = useState<string | null>(null);
+
+  const [caseSummary, setCaseSummary] = useState<SummaryItem[]>([]);
+  const [caseSummaryLoading, setCaseSummaryLoading] = useState(true);
+  const [caseSummaryError, setCaseSummaryError] = useState<string | null>(null);
+
+  const [incidentSummary, setIncidentSummary] = useState<SummaryItem[]>([]);
+  const [incidentSummaryLoading, setIncidentSummaryLoading] = useState(true);
+  const [incidentSummaryError, setIncidentSummaryError] = useState<string | null>(null);
 
   // ----- Permits state -----
   const [permits, setPermits] = useState<BuildingPermit[]>([]);
@@ -240,14 +353,28 @@ const City = () => {
   const [incidentNeighborhood, setIncidentNeighborhood] = useState("");
   const debouncedIncidentSearch = useDebounce(incidentSearch, 300);
 
-  // ----- Load summary -----
+  // ----- Load summaries -----
   useEffect(() => {
-    setSummaryLoading(true);
-    setSummaryError(null);
-    executePublicGraphQL<{ permitSummary: PermitSummary[] }>(PERMIT_SUMMARY_QUERY, { groupBy: "status" })
-      .then(data => setSummary(data.permitSummary))
-      .catch(err => setSummaryError(err.message))
-      .finally(() => setSummaryLoading(false));
+    setPermitSummaryLoading(true);
+    setPermitSummaryError(null);
+    executePublicGraphQL<{ permitSummary: SummaryItem[] }>(PERMIT_SUMMARY_QUERY, { groupBy: "status" })
+      .then(data => setPermitSummary(data.permitSummary))
+      .catch(err => setPermitSummaryError(err.message))
+      .finally(() => setPermitSummaryLoading(false));
+
+    setCaseSummaryLoading(true);
+    setCaseSummaryError(null);
+    executePublicGraphQL<{ serviceCaseSummary: SummaryItem[] }>(SERVICE_CASE_SUMMARY_QUERY, { groupBy: "status_description" })
+      .then(data => setCaseSummary(data.serviceCaseSummary))
+      .catch(err => setCaseSummaryError(err.message))
+      .finally(() => setCaseSummaryLoading(false));
+
+    setIncidentSummaryLoading(true);
+    setIncidentSummaryError(null);
+    executePublicGraphQL<{ policeIncidentSummary: SummaryItem[] }>(POLICE_INCIDENT_SUMMARY_QUERY, { groupBy: "incident_category" })
+      .then(data => setIncidentSummary(data.policeIncidentSummary))
+      .catch(err => setIncidentSummaryError(err.message))
+      .finally(() => setIncidentSummaryLoading(false));
   }, []);
 
   // Generation counters prevent stale fetches from writing state under React StrictMode.
@@ -448,41 +575,50 @@ const City = () => {
         {/* Summary cards */}
         <div>
           <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-            Permit Status Summary
+            Data Overview
           </h2>
-          {summaryError ? (
-            <div className="flex items-center gap-2 text-destructive text-sm">
-              <AlertCircle className="h-4 w-4" />
-              Failed to load summary: {summaryError}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {summaryLoading
-                ? Array.from({ length: 5 }).map((_, i) => (
-                    <Card key={i}>
-                      <CardContent className="pt-4 pb-4">
-                        <Skeleton className="h-6 w-16 mb-1" />
-                        <Skeleton className="h-4 w-24" />
-                      </CardContent>
-                    </Card>
-                  ))
-                : summary.slice(0, 10).map(item => (
-                    <Card key={item.category}>
-                      <CardContent className="pt-4 pb-4">
-                        <p className="text-2xl font-bold">{item.count.toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground capitalize truncate" title={item.category}>
-                          {item.category}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))
-              }
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <DomainSummaryCard
+              title="Building Permits"
+              icon={<Building2 className="h-4 w-4 text-blue-700" />}
+              items={permitSummary}
+              loading={permitSummaryLoading}
+              error={permitSummaryError}
+              tabValue="permits"
+              borderClass="border-t-blue-500"
+              badgeBgClass="bg-blue-100"
+              barClass="bg-blue-500"
+              onSelect={setActiveTab}
+            />
+            <DomainSummaryCard
+              title="311 Service Cases"
+              icon={<Phone className="h-4 w-4 text-amber-700" />}
+              items={caseSummary}
+              loading={caseSummaryLoading}
+              error={caseSummaryError}
+              tabValue="cases"
+              borderClass="border-t-amber-500"
+              badgeBgClass="bg-amber-100"
+              barClass="bg-amber-500"
+              onSelect={setActiveTab}
+            />
+            <DomainSummaryCard
+              title="Police Incidents"
+              icon={<Shield className="h-4 w-4 text-red-700" />}
+              items={incidentSummary}
+              loading={incidentSummaryLoading}
+              error={incidentSummaryError}
+              tabValue="incidents"
+              borderClass="border-t-red-500"
+              badgeBgClass="bg-red-100"
+              barClass="bg-red-500"
+              onSelect={setActiveTab}
+            />
+          </div>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="permits">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="permits">Building Permits</TabsTrigger>
             <TabsTrigger value="cases">311 Cases</TabsTrigger>
