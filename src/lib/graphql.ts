@@ -12,11 +12,11 @@ interface GraphQLResponse<T> {
  * - Host:port from Render: example.onrender.com:443
  * - Hostname only: example.onrender.com
  * - Internal Render hostname: urbanmesh-backend:10000 (derives public URL from current location)
- * - Local development: http://localhost:8080/graphql
+ * - Local development: http://localhost:10000/graphql
  */
 function normalizeGraphQLEndpoint(endpoint: string | undefined): string {
   if (!endpoint) {
-    return "http://localhost:8080/graphql";
+    return "http://localhost:10000/graphql";
   }
 
   // Already a full URL
