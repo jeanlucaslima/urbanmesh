@@ -59,7 +59,7 @@ export function CityMap({ permits, cases, incidents }: CityMapProps) {
               .filter(p => p.latitude && p.longitude && !isNaN(parseFloat(p.latitude)) && !isNaN(parseFloat(p.longitude)))
               .map(p => (
                 <CircleMarker
-                  key={p.permitNumber}
+                  key={`permit-${p.permitNumber}`}
                   center={[parseFloat(p.latitude!), parseFloat(p.longitude!)]}
                   radius={5}
                   pathOptions={{ color: "#2563eb", fillColor: "#3b82f6", fillOpacity: 0.7, weight: 1 }}
@@ -82,7 +82,7 @@ export function CityMap({ permits, cases, incidents }: CityMapProps) {
               .filter(c => c.latitude && c.longitude && !isNaN(parseFloat(c.latitude)) && !isNaN(parseFloat(c.longitude)))
               .map(c => (
                 <CircleMarker
-                  key={c.serviceRequestId}
+                  key={`case-${c.serviceRequestId}`}
                   center={[parseFloat(c.latitude!), parseFloat(c.longitude!)]}
                   radius={5}
                   pathOptions={{ color: "#d97706", fillColor: "#f59e0b", fillOpacity: 0.7, weight: 1 }}
@@ -105,7 +105,7 @@ export function CityMap({ permits, cases, incidents }: CityMapProps) {
               .filter(i => i.latitude != null && i.longitude != null)
               .map(i => (
                 <CircleMarker
-                  key={i.incidentId}
+                  key={`incident-${i.incidentId}`}
                   center={[i.latitude!, i.longitude!]}
                   radius={5}
                   pathOptions={{ color: "#dc2626", fillColor: "#ef4444", fillOpacity: 0.7, weight: 1 }}
