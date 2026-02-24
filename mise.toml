@@ -9,13 +9,14 @@ DOCKER_HOST = "{{exec(command='.mise/scripts/get-podman-socket.sh')}}"
 
 # Backend environment (Urbanmesh/Kotlin)
 SUPABASE_URL = "http://127.0.0.1:54321"
-SUPABASE_ANON_KEY = ""  # Set via .env or environment
-SUPABASE_SERVICE_ROLE_KEY = ""  # Set via .env or environment
+SUPABASE_ANON_KEY = "eyJhbGciOiJFUzI1NiIsImtpZCI6ImI4MTI2OWYxLTIxZDgtNGYyZS1iNzE5LWMyMjQwYTg0MGQ5MCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjIwODczMDgyNTh9.dghby5une3BKtZh_4xZfjGAklvqsFpdRWk6pm0N68Bw9uNE9Y6LzxBY29GAwiOzYp55eChMaebvoCLkwsZFQwA"
+SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJFUzI1NiIsImtpZCI6ImI4MTI2OWYxLTIxZDgtNGYyZS1iNzE5LWMyMjQwYTg0MGQ5MCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MjA4NzMwODI1OH0.0eFZQU1bXraGrOlA6eXW1-2epb9kVTQUTCxkPlNB78v0AYE08btKtlc1ymJumlPAoqrf-YHpd02LmF-Zn_w5DQ"
 
 # Frontend environment (Vite/React)
 VITE_SUPABASE_URL = "http://127.0.0.1:54321"
-VITE_SUPABASE_PUBLISHABLE_KEY = ""  # Set via .env or environment
+VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"
 VITE_SUPABASE_PROJECT_ID = ""  # Set via .env or environment
+VITE_GRAPHQL_ENDPOINT = "http://localhost:10000/graphql"
 
 # Dependency startup tasks
 [tasks.podman-start]

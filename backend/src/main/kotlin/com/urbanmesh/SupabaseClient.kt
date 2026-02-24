@@ -389,6 +389,20 @@ class AuthenticatedSupabaseClient(
     }
 
     /**
+     * Get all group memberships for a user
+     */
+    suspend fun getUserMemberships(userId: String): List<com.urbanmesh.services.GroupMemberEntity> {
+        val response: HttpResponse = httpClient.get("$supabaseUrl/rest/v1/group_members") {
+            header("Authorization", "Bearer $accessToken")
+            header("apikey", supabaseKey)
+            parameter("user_id", "eq.$userId")
+            parameter("select", "*")
+        }
+        val jsonString = response.bodyAsText()
+        return json.decodeFromString(jsonString)
+    }
+
+    /**
      * Add a member to a group
      */
     suspend fun addGroupMember(groupId: String, userId: String): com.urbanmesh.services.GroupMemberEntity {

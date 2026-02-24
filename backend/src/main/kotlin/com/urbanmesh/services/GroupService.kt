@@ -81,6 +81,13 @@ open class GroupService(
     }
 
     /**
+     * Get all group memberships for a user.
+     */
+    suspend fun getUserMemberships(authenticatedClient: AuthenticatedSupabaseClient, userId: String): List<GroupMemberEntity> {
+        return authenticatedClient.getUserMemberships(userId)
+    }
+
+    /**
      * Get all members of a group.
      */
     suspend fun getGroupMembers(authenticatedClient: AuthenticatedSupabaseClient, groupId: String): List<GroupMemberEntity> {
