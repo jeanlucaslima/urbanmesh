@@ -24,16 +24,21 @@ get_socket_path() {
     local machine_name="$1"
     local socket_path=""
 
-    # Try to get socket from machine inspect
-    socket_path=$(podman machine inspect "$machine_name" 2>/dev/null | grep -o '/tmp/podman/[^"]*api\.sock' | head -1)
+    # Try to get socket from machine inspect (matches any path ending in api.sock)
+    socket_path=$(podman machine inspect "$machine_name" 2>/dev/null | grep -o '"Path": *"[^"]*api\.sock"' | grep -o '/[^"]*api\.sock' | head -1)
 
     if [ -z "$socket_path" ]; then
         socket_path=$(podman machine inspect "$machine_name" 2>/dev/null | grep -o '/[^"]*\.sock' | grep -i podman | grep -i api | head -1)
     fi
 
     if [ -z "$socket_path" ]; then
-        # Check common socket locations directly
-        if [ -S "/tmp/podman/${machine_name}-api.sock" ]; then
+        # Check common socket locations directly, including macOS $TMPDIR
+        local tmpdir="${TMPDIR:-/tmp}"
+        if [ -S "${tmpdir}podman/${machine_name}-api.sock" ]; then
+            socket_path="${tmpdir}podman/${machine_name}-api.sock"
+        elif [ -S "${tmpdir}podman/podman-machine-default-api.sock" ]; then
+            socket_path="${tmpdir}podman/podman-machine-default-api.sock"
+        elif [ -S "/tmp/podman/${machine_name}-api.sock" ]; then
             socket_path="/tmp/podman/${machine_name}-api.sock"
         elif [ -S "/tmp/podman/podman-machine-default-api.sock" ]; then
             socket_path="/tmp/podman/podman-machine-default-api.sock"

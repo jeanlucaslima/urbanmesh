@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
+import { CityMap } from "@/components/CityMap";
+import "leaflet/dist/leaflet.css";
 
 // ---- GraphQL queries -------------------------------------------------------
 
@@ -27,6 +29,8 @@ const BUILDING_PERMITS_QUERY = `
       supervisorDistrict
       estimatedCost
       description
+      latitude
+      longitude
     }
   }
 `;
@@ -45,6 +49,8 @@ const SERVICE_CASES_QUERY = `
       supervisorDistrict
       agencyResponsible
       source
+      latitude
+      longitude
     }
   }
 `;
@@ -54,6 +60,24 @@ const PERMIT_SUMMARY_QUERY = `
     permitSummary(groupBy: $groupBy) {
       category
       count
+    }
+  }
+`;
+
+const POLICE_INCIDENTS_QUERY = `
+  query PoliceIncidents($filter: PoliceIncidentFilter, $pagination: PaginationInput) {
+    policeIncidents(filter: $filter, pagination: $pagination) {
+      incidentId
+      incidentDatetime
+      incidentCategory
+      incidentSubcategory
+      incidentDescription
+      resolution
+      address
+      neighborhood
+      supervisorDistrict
+      latitude
+      longitude
     }
   }
 `;
@@ -72,6 +96,8 @@ interface BuildingPermit {
   supervisorDistrict?: string;
   estimatedCost?: string;
   description?: string;
+  latitude?: string;
+  longitude?: string;
 }
 
 interface ServiceCase {
@@ -86,6 +112,22 @@ interface ServiceCase {
   supervisorDistrict?: string;
   agencyResponsible?: string;
   source?: string;
+  latitude?: string;
+  longitude?: string;
+}
+
+interface PoliceIncident {
+  incidentId: string;
+  incidentDatetime?: string;
+  incidentCategory?: string;
+  incidentSubcategory?: string;
+  incidentDescription?: string;
+  resolution?: string;
+  address?: string;
+  neighborhood?: string;
+  supervisorDistrict?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface PermitSummary {
@@ -139,6 +181,16 @@ const PERMIT_STATUS_OPTIONS = [
 
 const CASE_STATUS_OPTIONS = ["Open", "Closed"];
 
+const INCIDENT_CATEGORY_OPTIONS = [
+  "Larceny Theft", "Assault", "Burglary", "Motor Vehicle Theft", "Vandalism",
+  "Drug Offense", "Robbery", "Fraud", "Disorderly Conduct", "Missing Person",
+  "Warrant", "Traffic Collision", "Suspicious Occ", "Other Miscellaneous"
+];
+
+const INCIDENT_RESOLUTION_OPTIONS = [
+  "Cite or Arrest Adult", "Exceptional Adult", "Unfounded", "Open or Active", "Not Prosecuted"
+];
+
 const NEIGHBORHOOD_OPTIONS = [
   "Mission", "Castro/Upper Market", "Haight Ashbury", "South of Market", "Tenderloin",
   "Financial District/South Beach", "Nob Hill", "North Beach", "Richmond", "Sunset/Parkside",
@@ -176,6 +228,18 @@ const City = () => {
   const [caseNeighborhood, setCaseNeighborhood] = useState("");
   const debouncedCaseSearch = useDebounce(caseSearch, 300);
 
+  // ----- Incidents state -----
+  const [incidents, setIncidents] = useState<PoliceIncident[]>([]);
+  const [incidentsLoading, setIncidentsLoading] = useState(false);
+  const [incidentsError, setIncidentsError] = useState<string | null>(null);
+  const [incidentsOffset, setIncidentsOffset] = useState(0);
+  const [incidentsHasMore, setIncidentsHasMore] = useState(true);
+
+  const [incidentSearch, setIncidentSearch] = useState("");
+  const [incidentCategory, setIncidentCategory] = useState("");
+  const [incidentNeighborhood, setIncidentNeighborhood] = useState("");
+  const debouncedIncidentSearch = useDebounce(incidentSearch, 300);
+
   // ----- Load summary -----
   useEffect(() => {
     setSummaryLoading(true);
@@ -186,10 +250,10 @@ const City = () => {
       .finally(() => setSummaryLoading(false));
   }, []);
 
-  // Generation counters (shared via ref across all invocations) prevent stale fetches from
-  // writing state even under React StrictMode's double-invocation of effects.
+  // Generation counters prevent stale fetches from writing state under React StrictMode.
   const permitsFetchGen = useRef(0);
   const casesFetchGen = useRef(0);
+  const incidentsFetchGen = useRef(0);
 
   // Keep refs to current filter values so load-more handlers always use fresh state
   const permitFilterRef = useRef({ debouncedPermitSearch, permitStatus, permitNeighborhood });
@@ -197,6 +261,9 @@ const City = () => {
 
   const caseFilterRef = useRef({ debouncedCaseSearch, caseStatus, caseNeighborhood });
   caseFilterRef.current = { debouncedCaseSearch, caseStatus, caseNeighborhood };
+
+  const incidentFilterRef = useRef({ debouncedIncidentSearch, incidentCategory, incidentNeighborhood });
+  incidentFilterRef.current = { debouncedIncidentSearch, incidentCategory, incidentNeighborhood };
 
   // ----- Load permits on filter change -----
   useEffect(() => {
@@ -300,6 +367,57 @@ const City = () => {
       .finally(() => setCasesLoading(false));
   };
 
+  // ----- Load incidents on filter change -----
+  useEffect(() => {
+    const gen = ++incidentsFetchGen.current;
+
+    setIncidents([]);
+    setIncidentsOffset(0);
+    setIncidentsHasMore(true);
+    setIncidentsLoading(true);
+    setIncidentsError(null);
+
+    const filter: Record<string, string> = {};
+    if (debouncedIncidentSearch) filter.search = debouncedIncidentSearch;
+    if (incidentCategory) filter.incidentCategory = incidentCategory;
+    if (incidentNeighborhood) filter.neighborhood = incidentNeighborhood;
+
+    executePublicGraphQL<{ policeIncidents: PoliceIncident[] }>(POLICE_INCIDENTS_QUERY, {
+      filter: Object.keys(filter).length > 0 ? filter : null,
+      pagination: { limit: PAGE_SIZE, offset: 0 },
+    })
+      .then(data => {
+        if (incidentsFetchGen.current !== gen) return;
+        setIncidents(data.policeIncidents);
+        setIncidentsHasMore(data.policeIncidents.length === PAGE_SIZE);
+      })
+      .catch(err => { if (incidentsFetchGen.current === gen) setIncidentsError(err.message); })
+      .finally(() => { if (incidentsFetchGen.current === gen) setIncidentsLoading(false); });
+  }, [debouncedIncidentSearch, incidentCategory, incidentNeighborhood]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadMoreIncidents = () => {
+    const next = incidentsOffset + PAGE_SIZE;
+    setIncidentsOffset(next);
+    setIncidentsLoading(true);
+
+    const { debouncedIncidentSearch: s, incidentCategory: cat, incidentNeighborhood: n } = incidentFilterRef.current;
+    const filter: Record<string, string> = {};
+    if (s) filter.search = s;
+    if (cat) filter.incidentCategory = cat;
+    if (n) filter.neighborhood = n;
+
+    executePublicGraphQL<{ policeIncidents: PoliceIncident[] }>(POLICE_INCIDENTS_QUERY, {
+      filter: Object.keys(filter).length > 0 ? filter : null,
+      pagination: { limit: PAGE_SIZE, offset: next },
+    })
+      .then(data => {
+        setIncidents(prev => [...prev, ...data.policeIncidents]);
+        setIncidentsHasMore(data.policeIncidents.length === PAGE_SIZE);
+      })
+      .catch(err => setIncidentsError(err.message))
+      .finally(() => setIncidentsLoading(false));
+  };
+
   // ---- Render ----------------------------------------------------------------
 
   return (
@@ -368,6 +486,8 @@ const City = () => {
           <TabsList>
             <TabsTrigger value="permits">Building Permits</TabsTrigger>
             <TabsTrigger value="cases">311 Cases</TabsTrigger>
+            <TabsTrigger value="incidents">Police Incidents</TabsTrigger>
+            <TabsTrigger value="map">Map</TabsTrigger>
           </TabsList>
 
           {/* ---- Building Permits Tab ---- */}
@@ -622,6 +742,154 @@ const City = () => {
                 )}
               </Card>
             )}
+          </TabsContent>
+
+          {/* ---- Police Incidents Tab ---- */}
+          <TabsContent value="incidents" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Filter Police Incidents</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Input
+                    placeholder="Search incidents..."
+                    value={incidentSearch}
+                    onChange={e => setIncidentSearch(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Select value={incidentCategory || "all"} onValueChange={v => setIncidentCategory(v === "all" ? "" : v)}>
+                    <SelectTrigger className="w-full sm:w-52">
+                      <SelectValue placeholder="All categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All categories</SelectItem>
+                      {INCIDENT_CATEGORY_OPTIONS.map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={incidentNeighborhood || "all"} onValueChange={v => setIncidentNeighborhood(v === "all" ? "" : v)}>
+                    <SelectTrigger className="w-full sm:w-52">
+                      <SelectValue placeholder="All neighborhoods" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All neighborhoods</SelectItem>
+                      {NEIGHBORHOOD_OPTIONS.map(n => (
+                        <SelectItem key={n} value={n}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {incidentsError ? (
+              <div className="flex items-center gap-2 text-destructive text-sm p-4">
+                <AlertCircle className="h-4 w-4" />
+                {incidentsError}
+              </div>
+            ) : (
+              <Card>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Incident ID</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Subcategory</TableHead>
+                        <TableHead>Address</TableHead>
+                        <TableHead>Neighborhood</TableHead>
+                        <TableHead>Resolution</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {incidentsLoading && incidents.length === 0
+                        ? Array.from({ length: 8 }).map((_, i) => (
+                            <TableRow key={i}>
+                              {Array.from({ length: 7 }).map((_, j) => (
+                                <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                              ))}
+                            </TableRow>
+                          ))
+                        : incidents
+                            .filter(i =>
+                              (!incidentCategory || i.incidentCategory?.toLowerCase().includes(incidentCategory.toLowerCase())) &&
+                              (!incidentNeighborhood || i.neighborhood?.toLowerCase().includes(incidentNeighborhood.toLowerCase()))
+                            )
+                            .map(i => (
+                            <TableRow key={i.incidentId}>
+                              <TableCell className="font-mono text-xs whitespace-nowrap">
+                                {i.incidentId}
+                              </TableCell>
+                              <TableCell className="text-xs max-w-[140px] truncate" title={i.incidentCategory ?? undefined}>
+                                {i.incidentCategory ?? "—"}
+                              </TableCell>
+                              <TableCell className="text-xs max-w-[140px] truncate" title={i.incidentSubcategory ?? undefined}>
+                                {i.incidentSubcategory ?? "—"}
+                              </TableCell>
+                              <TableCell className="text-xs max-w-[160px] truncate" title={i.address ?? undefined}>
+                                {i.address ?? "—"}
+                              </TableCell>
+                              <TableCell className="text-xs">{i.neighborhood ?? "—"}</TableCell>
+                              <TableCell className="text-xs max-w-[140px] truncate" title={i.resolution ?? undefined}>
+                                {i.resolution ?? "—"}
+                              </TableCell>
+                              <TableCell className="text-xs whitespace-nowrap">
+                                {formatDate(i.incidentDatetime)}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                      }
+                    </TableBody>
+                  </Table>
+                </div>
+                {incidents.length > 0 && (
+                  <div className="p-4 border-t flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Showing {incidents.length} incidents</span>
+                    {incidentsHasMore && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={loadMoreIncidents}
+                        disabled={incidentsLoading}
+                      >
+                        {incidentsLoading ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : null}
+                        Load More
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* ---- Map Tab ---- */}
+          <TabsContent value="map" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">City Map</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 overflow-hidden rounded-b-lg">
+                <div className="px-6 pb-3 pt-0 text-xs text-muted-foreground flex gap-4">
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 rounded-full bg-blue-500"></span> Building Permits
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 rounded-full bg-amber-500"></span> 311 Cases
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 rounded-full bg-red-500"></span> Police Incidents
+                  </span>
+                </div>
+                <div className="px-6 pb-6">
+                  <CityMap permits={permits} cases={cases} incidents={incidents} />
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 

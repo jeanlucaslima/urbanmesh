@@ -149,6 +149,96 @@ type ServiceCase @scope(to: ["public"]) {
 }
 
 """
+A San Francisco police incident record from SF Open Data (dataset wg3w-h783).
+"""
+type PoliceIncident @scope(to: ["public"]) {
+  """
+  The unique incident identifier.
+  """
+  incidentId: String!
+
+  """
+  When the incident occurred.
+  """
+  incidentDatetime: String
+
+  """
+  Category of the incident (e.g., "Larceny Theft", "Assault").
+  """
+  incidentCategory: String
+
+  """
+  Subcategory of the incident.
+  """
+  incidentSubcategory: String
+
+  """
+  Description of the incident.
+  """
+  incidentDescription: String
+
+  """
+  How the incident was resolved (e.g., "Cite or Arrest Adult").
+  """
+  resolution: String
+
+  """
+  Address where the incident occurred.
+  """
+  address: String
+
+  """
+  The SF Board of Supervisors district number.
+  """
+  supervisorDistrict: String
+
+  """
+  The neighborhood where the incident occurred.
+  """
+  neighborhood: String
+
+  """
+  Latitude of the incident location.
+  """
+  latitude: Float
+
+  """
+  Longitude of the incident location.
+  """
+  longitude: Float
+}
+
+"""
+Filter options for police incident queries.
+"""
+input PoliceIncidentFilter @scope(to: ["public"]) {
+  """
+  Filter by incident category (e.g., "Larceny Theft").
+  """
+  incidentCategory: String
+
+  """
+  Filter by resolution type.
+  """
+  resolution: String
+
+  """
+  Filter by supervisor district number.
+  """
+  supervisorDistrict: String
+
+  """
+  Filter by neighborhood name.
+  """
+  neighborhood: String
+
+  """
+  Full-text search across incident fields.
+  """
+  search: String
+}
+
+"""
 Aggregated count for a permit grouping (e.g., by status or neighborhood).
 """
 type PermitSummary @scope(to: ["public"]) {
@@ -262,4 +352,10 @@ extend type Query @scope(to: ["public"]) {
   "neighborhoods_analysis_boundaries", "supervisor_district".
   """
   permitSummary(groupBy: String!): [PermitSummary!]! @resolver
+
+  """
+  List San Francisco police incidents with optional filtering and pagination.
+  Data is sourced live from SF Open Data (dataset wg3w-h783).
+  """
+  policeIncidents(filter: PoliceIncidentFilter, pagination: PaginationInput): [PoliceIncident!]! @resolver
 }

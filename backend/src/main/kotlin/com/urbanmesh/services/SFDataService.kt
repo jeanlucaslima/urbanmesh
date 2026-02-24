@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 
 private const val PERMITS_URL = "https://data.sfgov.org/resource/i98e-djp9.json"
 private const val CASES_URL = "https://data.sfgov.org/resource/vw6y-z8j6.json"
+private const val INCIDENTS_URL = "https://data.sfgov.org/resource/wg3w-h783.json"
 private const val DEFAULT_LIMIT = 20
 private const val MAX_LIMIT = 100
 
@@ -61,6 +62,24 @@ data class ServiceCaseDto(
 )
 
 /**
+ * SODA API response DTO for police incident reports (dataset wg3w-h783).
+ */
+@Serializable
+data class PoliceIncidentDto(
+    @SerialName("incident_id") val incidentId: String? = null,
+    @SerialName("incident_datetime") val incidentDatetime: String? = null,
+    @SerialName("incident_category") val incidentCategory: String? = null,
+    @SerialName("incident_subcategory") val incidentSubcategory: String? = null,
+    @SerialName("incident_description") val incidentDescription: String? = null,
+    @SerialName("resolution") val resolution: String? = null,
+    @SerialName("intersection") val address: String? = null,
+    @SerialName("supervisor_district") val supervisorDistrict: String? = null,
+    @SerialName("analysis_neighborhood") val neighborhood: String? = null,
+    @SerialName("latitude") val latitude: String? = null,
+    @SerialName("longitude") val longitude: String? = null
+)
+
+/**
  * SODA API response DTO for aggregation queries.
  */
 @Serializable
@@ -92,8 +111,19 @@ data class CaseFilter(
 )
 
 /**
+ * Filter parameters for police incident queries.
+ */
+data class IncidentFilter(
+    val incidentCategory: String? = null,
+    val resolution: String? = null,
+    val supervisorDistrict: String? = null,
+    val neighborhood: String? = null,
+    val search: String? = null
+)
+
+/**
  * Service for fetching live data from the SF Open Data SODA API.
- * Proxies building permits and 311 cases through the GraphQL backend.
+ * Proxies building permits, 311 cases, and police incidents through the GraphQL backend.
  */
 class SFDataService(private val httpClient: HttpClient) {
     private val json = Json { ignoreUnknownKeys = true }
@@ -185,6 +215,50 @@ class SFDataService(private val httpClient: HttpClient) {
         }
 
         return json.decodeFromString(response.bodyAsText())
+    }
+
+    /**
+     * Fetch police incident reports from SF Open Data with optional filtering and pagination.
+     */
+    suspend fun getPoliceIncidents(
+        filter: IncidentFilter? = null,
+        limit: Int = DEFAULT_LIMIT,
+        offset: Int = 0
+    ): List<PoliceIncidentDto> {
+        val effectiveLimit = limit.coerceAtMost(MAX_LIMIT)
+        val whereClauses = buildIncidentWhereClauses(filter)
+
+        val response = httpClient.get(INCIDENTS_URL) {
+            parameter("\$limit", effectiveLimit)
+            parameter("\$offset", offset)
+            parameter("\$order", "incident_datetime DESC")
+            if (whereClauses.isNotEmpty()) {
+                parameter("\$where", whereClauses.joinToString(" AND "))
+            }
+            filter?.search?.takeIf { it.isNotBlank() }?.let {
+                parameter("\$q", it)
+            }
+        }
+
+        return json.decodeFromString(response.bodyAsText())
+    }
+
+    private fun buildIncidentWhereClauses(filter: IncidentFilter?): List<String> {
+        if (filter == null) return emptyList()
+        val clauses = mutableListOf<String>()
+        filter.incidentCategory?.takeIf { it.isNotBlank() }?.let {
+            clauses.add("upper(incident_category) = upper('${it.replace("'", "\\'")}')")
+        }
+        filter.resolution?.takeIf { it.isNotBlank() }?.let {
+            clauses.add("upper(resolution) = upper('${it.replace("'", "\\'")}')")
+        }
+        filter.supervisorDistrict?.takeIf { it.isNotBlank() }?.let {
+            clauses.add("supervisor_district = '${it.replace("'", "\\'")}'")
+        }
+        filter.neighborhood?.takeIf { it.isNotBlank() }?.let {
+            clauses.add("upper(analysis_neighborhood) = upper('${it.replace("'", "\\'")}')")
+        }
+        return clauses
     }
 
     private fun buildPermitWhereClauses(filter: PermitFilter?): List<String> {
