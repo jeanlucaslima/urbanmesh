@@ -1,0 +1,150 @@
+"""
+A group that contains resources and members.
+Users must be members of the group to access resources within it.
+This is a core framework concept for organizing access control.
+"""
+type Group implements Node @scope(to: ["default"]) @requiresGroupMembership(groupIdField: "id") {
+  """
+  The unique identifier for the group.
+  """
+  id: ID!
+
+  """
+  The name of the group.
+  """
+  name: String!
+
+  """
+  Optional description of the group.
+  """
+  description: String
+
+  """
+  The user who created and owns this group.
+  """
+  ownerId: String!
+
+  """
+  All members of this group.
+  """
+  members: [GroupMember!]! @resolver
+
+  """
+  When the group was created.
+  """
+  createdAt: String!
+
+  """
+  When the group was last updated.
+  """
+  updatedAt: String!
+}
+
+"""
+Represents a user's membership in a group.
+"""
+type GroupMember @scope(to: ["default"]) {
+  """
+  The unique identifier for this membership.
+  """
+  id: ID!
+
+  """
+  The group this membership belongs to.
+  """
+  groupId: String!
+
+  """
+  The user who is a member.
+  """
+  userId: String!
+
+  """
+  When the user joined the group.
+  """
+  joinedAt: String!
+}
+
+"""
+Input for creating a new group.
+"""
+input CreateGroupInput @scope(to: ["default"]) {
+  """
+  The name of the group.
+  """
+  name: String!
+
+  """
+  Optional description of the group.
+  """
+  description: String
+}
+
+"""
+Input for adding a member to a group.
+"""
+input AddGroupMemberInput @scope(to: ["default"]) {
+  """
+  The ID of the group.
+  """
+  groupId: ID! @idOf(type: "Group")
+
+  """
+  The email or ID of the user to add.
+  """
+  userId: String!
+}
+
+"""
+Input for removing a member from a group.
+"""
+input RemoveGroupMemberInput @scope(to: ["default"]) {
+  """
+  The ID of the group.
+  """
+  groupId: ID! @idOf(type: "Group")
+
+  """
+  The user ID to remove.
+  """
+  userId: String!
+}
+
+extend type Query @scope(to: ["default"]) {
+  """
+  Get all groups the current user is a member of.
+  """
+  groups: [Group!]! @resolver
+
+  """
+  Get a specific group by ID.
+  Only accessible if the user is a member.
+  """
+  group(id: ID! @idOf(type: "Group")): Group @resolver
+
+  """
+  Get all memberships of the current authenticated user.
+  Returns all groups the user has joined with membership details.
+  """
+  myMemberships: [GroupMember!]! @resolver
+}
+
+extend type Mutation @scope(to: ["default"]) {
+  """
+  Create a new group.
+  The creator automatically becomes a member and owner.
+  """
+  createGroup(input: CreateGroupInput!): Group! @resolver
+
+  """
+  Add a member to a group.
+  Only the group owner can add members.
+  """
+  addGroupMember(input: AddGroupMemberInput!): GroupMember! @resolver
+
+  """
+  Remove a member from a group.
+  The owner or the member themselves can remove the membership.
+  """
+  removeGroupMember(input: RemoveGroupMemberInput!): Boolean! @resolver
+}

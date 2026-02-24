@@ -1,0 +1,69 @@
+# Render.com Blueprint
+# Deploy this project with: https://render.com/deploy
+#
+# Prerequisites:
+# 1. A Supabase project (https://supabase.com)
+# 2. Supabase URL and API keys from Settings → API in your Supabase dashboard
+
+services:
+  # Urbanmesh GraphQL Backend (Kotlin/Ktor)
+  # NOTE: JVM requires ~300-400MB RAM. Free tier (512MB) fits but spins down after inactivity.
+  # For always-on, upgrade to "starter" ($7/mo).
+  - type: web
+    name: urbanmesh-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .  # Root context to access schema/migrations
+    # No healthCheckPath — service goes live as soon as the port is bound.
+    # With CRaC sub-second restore, this is nearly instant. Render still
+    # monitors the process and restarts on crash.
+    plan: free
+    envVars:
+      # Supabase credentials - user will be prompted for these during deploy
+      # Project ID: Settings → General → Reference ID
+      - key: SUPABASE_PROJECT_ID
+        sync: false
+      # Legacy API Keys: Settings → API → "legacy anon, service_role API Keys" section
+      # (NOT the "Publishable API keys" section - those won't work with Supabase SDKs)
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      # CORS: Auto-configured to allow the frontend service
+      - key: ALLOWED_ORIGINS
+        fromService:
+          name: urbanmesh-frontend
+          type: web
+          property: host
+
+  # React Frontend (Static Site)
+  # Note: Static sites are always free on Render, no plan field needed
+  - type: web
+    name: urbanmesh-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      # Auto-link to backend GraphQL endpoint
+      # Frontend fetches Supabase config from backend at runtime
+      # Uses 'host' (public URL) not 'hostport' (internal service discovery)
+      - key: VITE_GRAPHQL_ENDPOINT
+        fromService:
+          name: urbanmesh-backend
+          type: web
+          property: host
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-XSS-Protection
+        value: 1; mode=block
+    routes:
+      # SPA fallback - serve index.html for client-side routing
+      - type: rewrite
+        source: /*
+        destination: /index.html
