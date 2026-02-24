@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { getSupabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { UserList } from "@/components/UserList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Shield, BookOpen, Plus } from "lucide-react";
+import { LogOut, Shield, BookOpen, Plus, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { executeGraphQL, GET_GROUPS, CREATE_GROUP } from "@/lib/graphql";
 
@@ -167,6 +167,34 @@ const Index = () => {
                 ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10">
+                  <Building2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>City Explorer</CardTitle>
+                  <CardDescription>Live SF civic data — no login required</CardDescription>
+                </div>
+              </div>
+              <Link to="/city">
+                <Button variant="outline" size="sm">
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Explore
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Browse live building permits and 311 service cases from SF Open Data, served through
+              the GraphQL backend with public-scoped queries.
+            </p>
           </CardContent>
         </Card>
 

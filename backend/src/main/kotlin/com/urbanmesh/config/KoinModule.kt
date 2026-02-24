@@ -4,6 +4,7 @@ import com.urbanmesh.SupabaseService
 import com.urbanmesh.resolvers.*
 import com.urbanmesh.services.AuthService
 import com.urbanmesh.services.GroupService
+import com.urbanmesh.services.SFDataService
 import com.urbanmesh.services.UserService
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -35,6 +36,7 @@ fun appModule(supabaseUrl: String, supabaseKey: String) = module {
     singleOf(::AuthService)
     singleOf(::UserService)
     singleOf(::GroupService)
+    singleOf(::SFDataService)
 
     // Resolvers - Auth (public, no authentication required)
     singleOf(::SignInResolver)
@@ -60,4 +62,10 @@ fun appModule(supabaseUrl: String, supabaseKey: String) = module {
 
     // Resolvers - Group Fields
     singleOf(::GroupMembersResolver)
+
+    // Resolvers - SF Open Data (public)
+    singleOf(::BuildingPermitsQueryResolver)
+    singleOf(::BuildingPermitQueryResolver)
+    singleOf(::ServiceCasesQueryResolver)
+    singleOf(::PermitSummaryQueryResolver)
 }

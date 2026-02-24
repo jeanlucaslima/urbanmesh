@@ -1,0 +1,265 @@
+"""
+A San Francisco building permit record from SF Open Data (dataset i98e-djp9).
+"""
+type BuildingPermit @scope(to: ["public"]) {
+  """
+  The unique permit number.
+  """
+  permitNumber: String!
+
+  """
+  The type of permit (e.g., "new construction", "alterations").
+  """
+  permitType: String
+
+  """
+  The street address of the permitted work.
+  """
+  address: String
+
+  """
+  The ZIP code of the permitted work.
+  """
+  zipcode: String
+
+  """
+  Current status of the permit (e.g., "issued", "filed", "expired").
+  """
+  status: String
+
+  """
+  Date the permit was filed.
+  """
+  filedDate: String
+
+  """
+  Date the permit was issued.
+  """
+  issuedDate: String
+
+  """
+  The neighborhood where the permitted work is located.
+  """
+  neighborhood: String
+
+  """
+  The SF Board of Supervisors district number.
+  """
+  supervisorDistrict: String
+
+  """
+  Existing use of the building before the permitted work.
+  """
+  existingUse: String
+
+  """
+  Proposed use of the building after the permitted work.
+  """
+  proposedUse: String
+
+  """
+  Estimated cost of the permitted work in USD.
+  """
+  estimatedCost: String
+
+  """
+  Description of the permitted work.
+  """
+  description: String
+
+  """
+  Latitude of the permit location.
+  """
+  latitude: String
+
+  """
+  Longitude of the permit location.
+  """
+  longitude: String
+}
+
+"""
+A San Francisco 311 service request case from SF Open Data (dataset vw6y-z8j6).
+"""
+type ServiceCase @scope(to: ["public"]) {
+  """
+  The unique service request identifier.
+  """
+  serviceRequestId: String!
+
+  """
+  When the case was opened.
+  """
+  requestedDatetime: String
+
+  """
+  When the case was closed (null if still open).
+  """
+  closedDate: String
+
+  """
+  Human-readable status description.
+  """
+  statusDescription: String
+
+  """
+  Category of the service request (e.g., "Street and Sidewalk Cleaning").
+  """
+  serviceName: String
+
+  """
+  Subcategory of the service request.
+  """
+  serviceSubtype: String
+
+  """
+  Address where the issue was reported.
+  """
+  address: String
+
+  """
+  The SF Board of Supervisors district number.
+  """
+  supervisorDistrict: String
+
+  """
+  The neighborhood where the issue was reported.
+  """
+  neighborhood: String
+
+  """
+  Latitude of the incident location.
+  """
+  latitude: String
+
+  """
+  Longitude of the incident location.
+  """
+  longitude: String
+
+  """
+  How the case was reported (e.g., "Phone", "Web", "Mobile/Open311").
+  """
+  source: String
+
+  """
+  The SF city agency responsible for resolving the case.
+  """
+  agencyResponsible: String
+}
+
+"""
+Aggregated count for a permit grouping (e.g., by status or neighborhood).
+"""
+type PermitSummary @scope(to: ["public"]) {
+  """
+  The grouping category value (e.g., "issued", "Mission").
+  """
+  category: String!
+
+  """
+  The number of permits in this category.
+  """
+  count: Int!
+}
+
+"""
+Filter options for building permit queries.
+"""
+input BuildingPermitFilter @scope(to: ["public"]) {
+  """
+  Filter by neighborhood name (exact match, case-insensitive).
+  """
+  neighborhood: String
+
+  """
+  Filter by permit status (e.g., "issued", "filed", "expired").
+  """
+  status: String
+
+  """
+  Filter by supervisor district number.
+  """
+  supervisorDistrict: String
+
+  """
+  Filter by ZIP code.
+  """
+  zipcode: String
+
+  """
+  Full-text search across permit fields.
+  """
+  search: String
+}
+
+"""
+Filter options for 311 service case queries.
+"""
+input ServiceCaseFilter @scope(to: ["public"]) {
+  """
+  Filter by service name / category.
+  """
+  serviceName: String
+
+  """
+  Filter by status (e.g., "Open", "Closed").
+  """
+  status: String
+
+  """
+  Filter by supervisor district number.
+  """
+  supervisorDistrict: String
+
+  """
+  Filter by neighborhood name.
+  """
+  neighborhood: String
+
+  """
+  Full-text search across case fields.
+  """
+  search: String
+}
+
+"""
+Pagination parameters for list queries.
+"""
+input PaginationInput @scope(to: ["public"]) {
+  """
+  Maximum number of records to return (default: 20, max: 100).
+  """
+  limit: Int
+
+  """
+  Number of records to skip for pagination (default: 0).
+  """
+  offset: Int
+}
+
+extend type Query @scope(to: ["public"]) {
+  """
+  List San Francisco building permits with optional filtering and pagination.
+  Data is sourced live from SF Open Data (dataset i98e-djp9).
+  """
+  buildingPermits(filter: BuildingPermitFilter, pagination: PaginationInput): [BuildingPermit!]! @resolver
+
+  """
+  Get a single building permit by permit number.
+  """
+  buildingPermit(permitNumber: String!): BuildingPermit @resolver
+
+  """
+  List San Francisco 311 service cases with optional filtering and pagination.
+  Data is sourced live from SF Open Data (dataset vw6y-z8j6).
+  """
+  serviceCases(filter: ServiceCaseFilter, pagination: PaginationInput): [ServiceCase!]! @resolver
+
+  """
+  Get aggregated permit counts grouped by a field.
+  Supported values for groupBy: "status", "permit_type_definition",
+  "neighborhoods_analysis_boundaries", "supervisor_district".
+  """
+  permitSummary(groupBy: String!): [PermitSummary!]! @resolver
+}

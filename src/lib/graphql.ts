@@ -270,6 +270,37 @@ export const GET_SUPABASE_CONFIG = `
 `;
 
 /**
+ * Execute a GraphQL query against the Viaduct backend without authentication.
+ * Used for public endpoints like SF Open Data queries that don't require login.
+ *
+ * @param query - GraphQL query string
+ * @param variables - Variables for the GraphQL operation
+ * @returns Parsed response data
+ * @throws Error if request fails
+ */
+export async function executePublicGraphQL<T>(query: string, variables?: Record<string, any>): Promise<T> {
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error: ${response.status}`);
+  }
+
+  const result: GraphQLResponse<T> = await response.json();
+
+  if (result.errors) {
+    throw new Error(result.errors[0]?.message || "GraphQL error");
+  }
+
+  return result.data as T;
+}
+
+/**
  * Fetch Supabase configuration from the backend.
  * This is a public endpoint that doesn't require authentication.
  */

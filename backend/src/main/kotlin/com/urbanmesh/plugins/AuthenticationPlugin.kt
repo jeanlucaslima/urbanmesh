@@ -16,7 +16,8 @@ import io.ktor.util.*
  * These include auth mutations and config queries.
  */
 private val PUBLIC_OPERATIONS = setOf(
-    "signIn", "signUp", "refreshToken", "supabaseConfig"
+    "signIn", "signUp", "refreshToken", "supabaseConfig",
+    "buildingPermits", "buildingPermit", "serviceCases", "permitSummary"
 )
 
 /**
