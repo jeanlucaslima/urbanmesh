@@ -12,6 +12,7 @@ private const val CASES_URL = "https://data.sfgov.org/resource/vw6y-z8j6.json"
 private const val INCIDENTS_URL = "https://data.sfgov.org/resource/wg3w-h783.json"
 private const val DEFAULT_LIMIT = 20
 private const val MAX_LIMIT = 100
+private const val DATE_FLOOR = "2025-01-01T00:00:00"
 
 /**
  * SODA API response DTO for building permits (dataset i98e-djp9).
@@ -137,15 +138,14 @@ class SFDataService(private val httpClient: HttpClient) {
         offset: Int = 0
     ): List<PermitDto> {
         val effectiveLimit = limit.coerceAtMost(MAX_LIMIT)
-        val whereClauses = buildPermitWhereClauses(filter)
+        val whereClauses = mutableListOf("filed_date >= '$DATE_FLOOR'")
+        whereClauses.addAll(buildPermitWhereClauses(filter))
 
         val response = httpClient.get(PERMITS_URL) {
             parameter("\$limit", effectiveLimit)
             parameter("\$offset", offset)
             parameter("\$order", "filed_date DESC")
-            if (whereClauses.isNotEmpty()) {
-                parameter("\$where", whereClauses.joinToString(" AND "))
-            }
+            parameter("\$where", whereClauses.joinToString(" AND "))
             filter?.search?.takeIf { it.isNotBlank() }?.let {
                 parameter("\$q", it)
             }
@@ -159,7 +159,7 @@ class SFDataService(private val httpClient: HttpClient) {
      */
     suspend fun getPermitByNumber(permitNumber: String): PermitDto? {
         val response = httpClient.get(PERMITS_URL) {
-            parameter("\$where", "permit_number='${permitNumber.replace("'", "\\'")}'")
+            parameter("\$where", "permit_number='${permitNumber.replace("'", "\\'")}' AND filed_date >= '$DATE_FLOOR'")
             parameter("\$limit", 1)
         }
 
@@ -176,15 +176,14 @@ class SFDataService(private val httpClient: HttpClient) {
         offset: Int = 0
     ): List<ServiceCaseDto> {
         val effectiveLimit = limit.coerceAtMost(MAX_LIMIT)
-        val whereClauses = buildCaseWhereClauses(filter)
+        val whereClauses = mutableListOf("requested_datetime >= '$DATE_FLOOR'")
+        whereClauses.addAll(buildCaseWhereClauses(filter))
 
         val response = httpClient.get(CASES_URL) {
             parameter("\$limit", effectiveLimit)
             parameter("\$offset", offset)
             parameter("\$order", "requested_datetime DESC")
-            if (whereClauses.isNotEmpty()) {
-                parameter("\$where", whereClauses.joinToString(" AND "))
-            }
+            parameter("\$where", whereClauses.joinToString(" AND "))
             filter?.search?.takeIf { it.isNotBlank() }?.let {
                 parameter("\$q", it)
             }
@@ -212,6 +211,7 @@ class SFDataService(private val httpClient: HttpClient) {
             parameter("\$group", safeColumn)
             parameter("\$order", "count DESC")
             parameter("\$limit", 50)
+            parameter("\$where", "filed_date >= '$DATE_FLOOR'")
         }
 
         return json.decodeFromString(response.bodyAsText())
@@ -237,6 +237,7 @@ class SFDataService(private val httpClient: HttpClient) {
             parameter("\$group", safeColumn)
             parameter("\$order", "count DESC")
             parameter("\$limit", 50)
+            parameter("\$where", "requested_datetime >= '$DATE_FLOOR'")
         }
 
         return json.decodeFromString(response.bodyAsText())
@@ -261,6 +262,7 @@ class SFDataService(private val httpClient: HttpClient) {
             parameter("\$group", safeColumn)
             parameter("\$order", "count DESC")
             parameter("\$limit", 50)
+            parameter("\$where", "incident_datetime >= '$DATE_FLOOR'")
         }
 
         return json.decodeFromString(response.bodyAsText())
@@ -275,15 +277,14 @@ class SFDataService(private val httpClient: HttpClient) {
         offset: Int = 0
     ): List<PoliceIncidentDto> {
         val effectiveLimit = limit.coerceAtMost(MAX_LIMIT)
-        val whereClauses = buildIncidentWhereClauses(filter)
+        val whereClauses = mutableListOf("incident_datetime >= '$DATE_FLOOR'")
+        whereClauses.addAll(buildIncidentWhereClauses(filter))
 
         val response = httpClient.get(INCIDENTS_URL) {
             parameter("\$limit", effectiveLimit)
             parameter("\$offset", offset)
             parameter("\$order", "incident_datetime DESC")
-            if (whereClauses.isNotEmpty()) {
-                parameter("\$where", whereClauses.joinToString(" AND "))
-            }
+            parameter("\$where", whereClauses.joinToString(" AND "))
             filter?.search?.takeIf { it.isNotBlank() }?.let {
                 parameter("\$q", it)
             }

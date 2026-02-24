@@ -333,43 +333,43 @@ extend type Query @scope(to: ["public"]) {
   List San Francisco building permits with optional filtering and pagination.
   Data is sourced live from SF Open Data (dataset i98e-djp9).
   """
-  buildingPermits(filter: BuildingPermitFilter, pagination: PaginationInput): [BuildingPermit!]! @resolver
+  buildingPermits(filter: BuildingPermitFilter, pagination: PaginationInput): [BuildingPermit!]! @resolver @dateFloor(column: "filed_date", from: "2025-01-01")
 
   """
   Get a single building permit by permit number.
   """
-  buildingPermit(permitNumber: String!): BuildingPermit @resolver
+  buildingPermit(permitNumber: String!): BuildingPermit @resolver @dateFloor(column: "filed_date", from: "2025-01-01")
 
   """
   List San Francisco 311 service cases with optional filtering and pagination.
   Data is sourced live from SF Open Data (dataset vw6y-z8j6).
   """
-  serviceCases(filter: ServiceCaseFilter, pagination: PaginationInput): [ServiceCase!]! @resolver
+  serviceCases(filter: ServiceCaseFilter, pagination: PaginationInput): [ServiceCase!]! @resolver @dateFloor(column: "requested_datetime", from: "2025-01-01")
 
   """
   Get aggregated permit counts grouped by a field.
   Supported values for groupBy: "status", "permit_type_definition",
   "neighborhoods_analysis_boundaries", "supervisor_district".
   """
-  permitSummary(groupBy: String!): [SummaryItem!]! @resolver
+  permitSummary(groupBy: String!): [SummaryItem!]! @resolver @dateFloor(column: "filed_date", from: "2025-01-01")
 
   """
   List San Francisco police incidents with optional filtering and pagination.
   Data is sourced live from SF Open Data (dataset wg3w-h783).
   """
-  policeIncidents(filter: PoliceIncidentFilter, pagination: PaginationInput): [PoliceIncident!]! @resolver
+  policeIncidents(filter: PoliceIncidentFilter, pagination: PaginationInput): [PoliceIncident!]! @resolver @dateFloor(column: "incident_datetime", from: "2025-01-01")
 
   """
   Get aggregated 311 service case counts grouped by a field.
   Supported values for groupBy: "status_description", "service_name",
   "agency_responsible", "neighborhood", "supervisor_district".
   """
-  serviceCaseSummary(groupBy: String!): [SummaryItem!]! @resolver
+  serviceCaseSummary(groupBy: String!): [SummaryItem!]! @resolver @dateFloor(column: "requested_datetime", from: "2025-01-01")
 
   """
   Get aggregated police incident counts grouped by a field.
   Supported values for groupBy: "incident_category", "resolution",
   "analysis_neighborhood", "supervisor_district".
   """
-  policeIncidentSummary(groupBy: String!): [SummaryItem!]! @resolver
+  policeIncidentSummary(groupBy: String!): [SummaryItem!]! @resolver @dateFloor(column: "incident_datetime", from: "2025-01-01")
 }

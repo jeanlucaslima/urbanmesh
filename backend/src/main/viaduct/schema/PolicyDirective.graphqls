@@ -10,3 +10,20 @@ directive @requiresGroupMembership(
   """
   groupIdField: String = "groupId"
 ) on FIELD_DEFINITION | OBJECT
+
+"""
+Directive to enforce a minimum date boundary on query results.
+Records before the specified floor date are never returned.
+Enforced at the data-access layer (SODA API queries).
+"""
+directive @dateFloor(
+  """
+  The data source column name containing the date to filter on.
+  """
+  column: String!
+
+  """
+  The minimum date (ISO 8601 date). Records before this date are excluded.
+  """
+  from: String!
+) on FIELD_DEFINITION
