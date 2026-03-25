@@ -2,6 +2,6 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://jeanlucaslima.github.io',
+  site: 'https://urbanmesh.app',
   output: 'static',
 });
