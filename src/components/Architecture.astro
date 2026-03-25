@@ -1,0 +1,261 @@
+---
+---
+
+<section id="architecture">
+  <div class="container">
+    <span class="section-label">Architecture</span>
+    <h2 class="section-title">Two Clients. One Graph.</h2>
+    <p class="section-subtitle">
+      A browser-based map UI and an AI client via MCP consume the same
+      GraphQL endpoint — differentiated only by a profile header.
+    </p>
+
+    <div class="arch-diagram">
+      <div class="arch-clients">
+        <div class="arch-client">
+          <div class="client-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <path d="M8 21h8M12 17v4" />
+            </svg>
+          </div>
+          <span class="client-name">Browser Client</span>
+          <span class="client-tech mono">MapLibre GL</span>
+          <span class="client-desc">Click, pan, search, compare layers on an interactive map</span>
+        </div>
+
+        <div class="arch-client">
+          <div class="client-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 2a8 8 0 0 1 8 8c0 3-1.5 5.5-4 7v3H8v-3c-2.5-1.5-4-4-4-7a8 8 0 0 1 8-8z" />
+              <path d="M10 22h4" />
+            </svg>
+          </div>
+          <span class="client-name">AI Client</span>
+          <span class="client-tech mono">Claude via MCP</span>
+          <span class="client-desc">Natural language queries, multi-step reasoning, 11 tools</span>
+        </div>
+      </div>
+
+      <div class="arch-connector">
+        <div class="connector-line"></div>
+        <div class="connector-line"></div>
+      </div>
+
+      <div class="arch-endpoint">
+        <div class="endpoint-box">
+          <span class="endpoint-label mono">POST /graphql</span>
+          <span class="endpoint-header mono">X-UrbanMesh-Profile: &lt;profile&gt;</span>
+        </div>
+      </div>
+
+      <div class="arch-connector">
+        <div class="connector-line single"></div>
+      </div>
+
+      <div class="arch-server">
+        <div class="server-box">
+          <span class="server-name">Viaduct Server</span>
+          <span class="server-tech mono">Kotlin/JVM</span>
+          <div class="server-modules">
+            <span class="module-tag">:parcels</span>
+            <span class="module-tag">:permits</span>
+            <span class="module-tag">:transit</span>
+            <span class="module-tag">:civic</span>
+            <span class="module-tag">:census</span>
+            <span class="module-tag">:environment</span>
+            <span class="module-tag">:geography</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-connector">
+        <div class="connector-line single"></div>
+      </div>
+
+      <div class="arch-db">
+        <div class="db-box">
+          <span class="db-name">PostgreSQL + PostGIS</span>
+          <span class="db-detail mono">11 tables &middot; spatial indexes &middot; no runtime API calls</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .arch-diagram {
+    margin-top: 56px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .arch-clients {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .arch-client {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .client-icon {
+    color: var(--secondary);
+    margin-bottom: 4px;
+  }
+
+  .client-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .client-tech {
+    font-size: 0.72rem;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+
+  .client-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+
+  .arch-connector {
+    display: flex;
+    gap: 120px;
+    justify-content: center;
+  }
+
+  .connector-line {
+    width: 1px;
+    height: 32px;
+    background: linear-gradient(to bottom, var(--border), var(--accent-dim));
+  }
+
+  .connector-line.single {
+    background: linear-gradient(to bottom, var(--accent-dim), var(--border));
+  }
+
+  .arch-endpoint {
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .endpoint-box {
+    background: var(--accent-dim);
+    border: 1px solid rgba(232, 197, 71, 0.25);
+    border-radius: 8px;
+    padding: 16px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .endpoint-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  .endpoint-header {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  .arch-server {
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .server-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .server-name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .server-tech {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  .server-modules {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .module-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--secondary);
+    background: var(--secondary-dim);
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+
+  .arch-db {
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .db-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .db-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .db-detail {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 480px) {
+    .arch-clients {
+      grid-template-columns: 1fr;
+    }
+
+    .arch-connector {
+      gap: 0;
+    }
+  }
+</style>

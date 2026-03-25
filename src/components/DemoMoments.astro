@@ -1,0 +1,147 @@
+---
+const moments = [
+  {
+    num: '01',
+    title: 'One city, one graph',
+    location: '16th & Mission',
+    punchline: 'Five data sources. One query. Zero client-side joins.',
+    description: 'A single query resolves a parcel with permits, zoning, transit stops, 311 cases, and census data — all from one endpoint.',
+  },
+  {
+    num: '02',
+    title: 'Same question, different answers',
+    location: '16th & Mission',
+    punchline: 'Same query, three profiles, completely different results.',
+    description: 'Switch the profile header and watch fields appear and disappear. The urban planner sees zoning compliance; the resident sees walkability.',
+  },
+  {
+    num: '03',
+    title: 'Who needs this stop?',
+    location: 'Market & Van Ness',
+    punchline: 'Same Muni stop, two planners, two different answers.',
+    description: 'The accessibility advocate sees ADA boarding and wheelchair access. The transit planner sees headway stats and coverage gaps.',
+  },
+  {
+    num: '04',
+    title: 'The invisible city',
+    location: 'Outer Sunset',
+    punchline: 'The data you never knew was there.',
+    description: 'The environmental advocate reveals tree canopy coverage, green space access, and bike commute patterns — an entirely different San Francisco.',
+  },
+  {
+    num: '05',
+    title: 'Disruption radar',
+    location: 'Valencia Corridor',
+    punchline: 'Every permit and complaint that could affect your storefront.',
+    description: 'The small business owner queries a single block and sees active construction permits, 311 complaints, and foot traffic proxy — a disruption risk assessment.',
+  },
+];
+---
+
+<section id="demo">
+  <div class="container">
+    <span class="section-label">Demo</span>
+    <h2 class="section-title">Five Moments. One Story.</h2>
+    <p class="section-subtitle">
+      A narrative arc across four real San Francisco locations,
+      showing what a unified data graph makes possible.
+    </p>
+
+    <div class="moments-list">
+      {moments.map((m) => (
+        <div class="moment-card">
+          <div class="moment-num mono">{m.num}</div>
+          <div class="moment-body">
+            <div class="moment-top">
+              <h3 class="moment-title">{m.title}</h3>
+              <span class="moment-location mono">{m.location}</span>
+            </div>
+            <p class="moment-desc">{m.description}</p>
+            <p class="moment-punchline">&ldquo;{m.punchline}&rdquo;</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .moments-list {
+    margin-top: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .moment-card {
+    display: flex;
+    gap: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 24px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .moment-card:hover {
+    border-color: var(--accent-dim);
+    background: var(--surface-hover);
+  }
+
+  .moment-num {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: 0.5;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  .moment-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .moment-top {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .moment-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .moment-location {
+    font-size: 0.7rem;
+    color: var(--secondary);
+    background: var(--secondary-dim);
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+
+  .moment-desc {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+  }
+
+  .moment-punchline {
+    font-size: 0.88rem;
+    color: var(--accent);
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  @media (max-width: 480px) {
+    .moment-card {
+      flex-direction: column;
+      gap: 12px;
+    }
+  }
+</style>

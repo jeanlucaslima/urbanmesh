@@ -1,0 +1,173 @@
+---
+const profiles = [
+  {
+    name: 'Urban Planner',
+    slug: 'urban-planner',
+    focus: 'Zoning compliance, permit history, land-use trends',
+    fields: ['zoningCompliance', 'permitHistory', 'landUseTrends'],
+  },
+  {
+    name: 'Real Estate Developer',
+    slug: 'real-estate-developer',
+    focus: 'Permit timelines, home values, investment metrics',
+    fields: ['permitDurationDays', 'medianHomeValue', 'investmentMetrics'],
+  },
+  {
+    name: 'Transit Planner',
+    slug: 'transit-planner',
+    focus: 'Stop frequency, coverage gaps, commute patterns',
+    fields: ['departuresPerHour', 'coverageGapScore', 'transitCommuterPct'],
+  },
+  {
+    name: 'Resident',
+    slug: 'resident',
+    focus: 'Nearby trees, transit options, walkability, open 311 cases',
+    fields: ['walkabilityScore', 'nearbyTrees', 'open311Cases'],
+  },
+  {
+    name: 'Small Business Owner',
+    slug: 'small-business-owner',
+    focus: 'Zoning verification, foot traffic, disruption risk',
+    fields: ['footTrafficProxy', 'disruptionRisk', 'nearbyPermits'],
+  },
+  {
+    name: 'Environmental Advocate',
+    slug: 'environmental-advocate',
+    focus: 'Tree canopy, green spaces, commute modes, equity',
+    fields: ['canopyCoverage', 'greenSpaceAccess', 'bikeCommutePct'],
+  },
+  {
+    name: 'Data Journalist',
+    slug: 'data-journalist',
+    focus: 'Time-series trends, anomalies, cross-correlations',
+    fields: ['permitVelocity', 'yoyAppreciation', 'complaintTrends'],
+  },
+  {
+    name: 'Accessibility Advocate',
+    slug: 'accessibility-advocate',
+    focus: 'ADA stops, accessible routes, sidewalk issues',
+    fields: ['adaAccessible', 'wheelchairBoarding', 'sidewalk311Cases'],
+  },
+];
+---
+
+<section id="profiles">
+  <div class="container">
+    <span class="section-label">Profiles</span>
+    <h2 class="section-title">Same Query. Different Eyes.</h2>
+    <p class="section-subtitle">
+      The <code class="inline-code">X-UrbanMesh-Profile</code> header controls which
+      fields resolve. Same schema, eight perspectives.
+    </p>
+
+    <div class="profile-grid">
+      {profiles.map((p) => (
+        <div class="profile-card">
+          <div class="profile-header-row">
+            <span class="profile-name">{p.name}</span>
+          </div>
+          <p class="profile-focus">{p.focus}</p>
+          <div class="profile-fields">
+            {p.fields.map((f) => (
+              <span class="field-tag mono">{f}</span>
+            ))}
+          </div>
+          <div class="profile-slug mono">
+            <span class="slug-key">Profile:</span> {p.slug}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .inline-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 48px;
+  }
+
+  .profile-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .profile-card:hover {
+    border-color: var(--secondary-dim);
+    background: var(--surface-hover);
+  }
+
+  .profile-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .profile-name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .profile-focus {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .profile-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .field-tag {
+    font-size: 0.68rem;
+    color: var(--secondary);
+    background: var(--secondary-dim);
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.01em;
+  }
+
+  .profile-slug {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+
+  .slug-key {
+    color: var(--text-muted);
+    opacity: 0.6;
+  }
+
+  @media (max-width: 1024px) {
+    .profile-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .profile-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

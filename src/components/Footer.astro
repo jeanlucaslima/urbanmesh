@@ -1,0 +1,69 @@
+---
+---
+
+<footer>
+  <div class="container footer-content">
+    <div class="footer-main">
+      <span class="footer-name">UrbanMesh</span>
+      <span class="footer-tagline">Built for GraphQL Conf 2026</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/jeanlucaslima/urbanmesh" target="_blank" rel="noopener">
+        GitHub
+      </a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 0;
+  }
+
+  .footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .footer-name {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .footer-tagline {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 20px;
+  }
+
+  .footer-links a {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover {
+    color: var(--accent);
+    opacity: 1;
+  }
+
+  @media (max-width: 480px) {
+    .footer-content {
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
+    }
+  }
+</style>
