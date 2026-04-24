@@ -1,0 +1,126 @@
+---
+---
+
+<section id="ai">
+  <div class="container">
+    <span class="section-label">AI Surface</span>
+    <h2 class="section-title">The graph already works as an interface.</h2>
+
+    <div class="ai-body">
+      <p class="ai-lede">
+        The AI client uses the same GraphQL API as the UI.
+      </p>
+      <p class="ai-sub">No extra layer. No custom endpoints.</p>
+
+      <div class="pipeline">
+        <div class="pipeline-row">
+          <span class="pipeline-node">UI client</span>
+          <span class="pipeline-sep">·</span>
+          <span class="pipeline-node">AI client <span class="pipeline-meta mono">Claude via <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener">MCP</a></span></span>
+        </div>
+        <div class="pipeline-arrow mono">↓ same GraphQL</div>
+        <div class="pipeline-target">
+          <span class="pipeline-target-name">One schema</span>
+          <span class="pipeline-meta mono">types · fields · relationships</span>
+        </div>
+      </div>
+
+      <p class="ai-outro">
+        Agents use the same structure as humans.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .ai-body {
+    margin-top: 32px;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .ai-lede {
+    font-size: 1.2rem;
+    color: var(--text);
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  .ai-sub {
+    font-size: 1rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .pipeline {
+    margin-top: 32px;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .pipeline-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 14px;
+  }
+
+  .pipeline-node {
+    font-size: 1.05rem;
+    color: var(--text);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .pipeline-sep {
+    color: var(--text-muted);
+    opacity: 0.5;
+  }
+
+  .pipeline-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .pipeline-meta a {
+    color: var(--accent);
+  }
+
+  .pipeline-arrow {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    padding-left: 8px;
+  }
+
+  .pipeline-target {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .pipeline-target-name {
+    font-size: 1.2rem;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .ai-outro {
+    margin-top: 24px;
+    font-size: 1rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+</style>

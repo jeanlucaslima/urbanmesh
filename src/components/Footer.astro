@@ -5,11 +5,17 @@
   <div class="container footer-content">
     <div class="footer-main">
       <span class="footer-name">UrbanMesh</span>
-      <span class="footer-tagline">Built for GraphQL Conf 2026</span>
+      <span class="footer-tagline">Open source experiment with <a href="https://viaduct.dev/" target="_blank" rel="noopener">Viaduct</a>.</span>
     </div>
     <div class="footer-links">
-      <a href="https://github.com/jeanlucaslima/urbanmesh" target="_blank" rel="noopener">
-        GitHub
+      <a href="https://graphql.org/conf/2026/schedule/50d245b496fbe7e54087e218e9b4b60d/?name=Turning%20San%20Francisco%20Into%20a%20GraphQL%20Server%20-%20Jean%20Lucas%20Lima,%20ConfrariaTech" target="_blank" rel="noopener">
+        The Talk
+      </a>
+      <a href="https://viaduct.dev/" target="_blank" rel="noopener">
+        Viaduct
+      </a>
+      <a class="cta-primary" href="https://github.com/jeanlucaslima/urbanmesh" target="_blank" rel="noopener">
+        Explore the graph on GitHub →
       </a>
     </div>
   </div>
@@ -57,6 +63,20 @@
   .footer-links a:hover {
     color: var(--accent);
     opacity: 1;
+  }
+
+  .cta-primary {
+    font-weight: 600;
+    color: var(--accent) !important;
+    border: 1px solid var(--accent-dim);
+    background: var(--accent-dim);
+    padding: 8px 14px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .cta-primary:hover {
+    background: rgba(232, 197, 71, 0.22);
   }
 
   @media (max-width: 480px) {

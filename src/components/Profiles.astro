@@ -1,22 +1,10 @@
 ---
-const profiles = [
+const featured = [
   {
     name: 'Urban Planner',
     slug: 'urban-planner',
     focus: 'Zoning compliance, permit history, land-use trends',
     fields: ['zoningCompliance', 'permitHistory', 'landUseTrends'],
-  },
-  {
-    name: 'Real Estate Developer',
-    slug: 'real-estate-developer',
-    focus: 'Permit timelines, home values, investment metrics',
-    fields: ['permitDurationDays', 'medianHomeValue', 'investmentMetrics'],
-  },
-  {
-    name: 'Transit Planner',
-    slug: 'transit-planner',
-    focus: 'Stop frequency, coverage gaps, commute patterns',
-    fields: ['departuresPerHour', 'coverageGapScore', 'transitCommuterPct'],
   },
   {
     name: 'Resident',
@@ -25,43 +13,66 @@ const profiles = [
     fields: ['walkabilityScore', 'nearbyTrees', 'open311Cases'],
   },
   {
-    name: 'Small Business Owner',
-    slug: 'small-business-owner',
-    focus: 'Zoning verification, foot traffic, disruption risk',
-    fields: ['footTrafficProxy', 'disruptionRisk', 'nearbyPermits'],
+    name: 'Developer',
+    slug: 'real-estate-developer',
+    focus: 'Permit timelines, home values, disruption risk',
+    fields: ['permitDurationDays', 'medianHomeValue', 'disruptionRisk'],
   },
-  {
-    name: 'Environmental Advocate',
-    slug: 'environmental-advocate',
-    focus: 'Tree canopy, green spaces, commute modes, equity',
-    fields: ['canopyCoverage', 'greenSpaceAccess', 'bikeCommutePct'],
-  },
-  {
-    name: 'Data Journalist',
-    slug: 'data-journalist',
-    focus: 'Time-series trends, anomalies, cross-correlations',
-    fields: ['permitVelocity', 'yoyAppreciation', 'complaintTrends'],
-  },
-  {
-    name: 'Accessibility Advocate',
-    slug: 'accessibility-advocate',
-    focus: 'ADA stops, accessible routes, sidewalk issues',
-    fields: ['adaAccessible', 'wheelchairBoarding', 'sidewalk311Cases'],
-  },
+];
+
+const more = [
+  'Transit Planner',
+  'Small Business Owner',
+  'Environmental Advocate',
+  'Data Journalist',
+  'Accessibility Advocate',
 ];
 ---
 
 <section id="profiles">
   <div class="container">
     <span class="section-label">Profiles</span>
-    <h2 class="section-title">Same Query. Different Eyes.</h2>
+    <h2 class="section-title">Same query. Different output.</h2>
     <p class="section-subtitle">
-      The <code class="inline-code">X-UrbanMesh-Profile</code> header controls which
-      fields resolve. Same schema, eight perspectives.
+      The <code class="inline-code">X-UrbanMesh-Profile</code> header controls what resolves.
+    </p>
+    <p class="profiles-lede">
+      The query stays the same.<br />
+      The response changes.
+    </p>
+    <p class="profiles-tail mono">
+      No new endpoints. No versioning.
     </p>
 
+    <div class="tree">
+      <div class="tree-root mono">query &#123; parcel &#123; insights &#125; &#125;</div>
+
+      <svg class="tree-lines" viewBox="0 0 600 70" preserveAspectRatio="none" aria-hidden="true">
+        <line x1="300" y1="0" x2="300" y2="28" />
+        <line x1="100" y1="28" x2="500" y2="28" />
+        <line x1="100" y1="28" x2="100" y2="70" />
+        <line x1="300" y1="28" x2="300" y2="70" />
+        <line x1="500" y1="28" x2="500" y2="70" />
+      </svg>
+
+      <div class="tree-leaves">
+        <div class="tree-leaf">
+          <span class="leaf-name">Planner</span>
+          <span class="leaf-field mono">zoningCompliance</span>
+        </div>
+        <div class="tree-leaf">
+          <span class="leaf-name">Resident</span>
+          <span class="leaf-field mono">walkabilityScore</span>
+        </div>
+        <div class="tree-leaf">
+          <span class="leaf-name">Developer</span>
+          <span class="leaf-field mono">disruptionRisk</span>
+        </div>
+      </div>
+    </div>
+
     <div class="profile-grid">
-      {profiles.map((p) => (
+      {featured.map((p) => (
         <div class="profile-card">
           <div class="profile-header-row">
             <span class="profile-name">{p.name}</span>
@@ -78,10 +89,31 @@ const profiles = [
         </div>
       ))}
     </div>
+
+    <div class="more-row">
+      <span class="more-label mono">+5 more profiles</span>
+      {more.map((n) => (
+        <span class="more-chip">{n}</span>
+      ))}
+    </div>
   </div>
 </section>
 
 <style>
+  .profiles-lede {
+    margin-top: 16px;
+    font-size: 1.05rem;
+    color: var(--text);
+    line-height: 1.6;
+    font-weight: 500;
+  }
+
+  .profiles-tail {
+    margin-top: 10px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+
   .inline-code {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.9em;
@@ -91,27 +123,75 @@ const profiles = [
     border-radius: 3px;
   }
 
+  .tree {
+    margin: 56px auto 0;
+    max-width: 620px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tree-root {
+    align-self: center;
+    background: var(--accent-dim);
+    border: 1px solid rgba(232, 197, 71, 0.25);
+    color: var(--accent);
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+  }
+
+  .tree-lines {
+    width: 100%;
+    height: 52px;
+    display: block;
+    stroke: rgba(232, 197, 71, 0.35);
+    stroke-width: 1;
+    fill: none;
+    overflow: visible;
+  }
+
+  .tree-leaves {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .tree-leaf {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding-top: 4px;
+  }
+
+  .leaf-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .leaf-field {
+    font-size: 0.75rem;
+    color: var(--secondary);
+  }
+
   .profile-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
-    margin-top: 48px;
+    margin-top: 56px;
   }
 
   .profile-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 24px 20px;
+    background: transparent;
+    border: none;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    padding: 22px 0 0 0;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    transition: border-color 0.2s, background 0.2s;
-  }
-
-  .profile-card:hover {
-    border-color: var(--secondary-dim);
-    background: var(--surface-hover);
   }
 
   .profile-header-row {
@@ -159,9 +239,42 @@ const profiles = [
     opacity: 0.6;
   }
 
+  .more-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 14px 18px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+  }
+
+  .more-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+
+  .more-chip {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+
   @media (max-width: 1024px) {
     .profile-grid {
       grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 520px) {
+    .tree-lines {
+      height: 40px;
     }
   }
 

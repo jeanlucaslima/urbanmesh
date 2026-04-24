@@ -1,0 +1,141 @@
+---
+const endpoints = [
+  { path: 'GET /parcels/:id', note: 'different shape · different auth · different pagination' },
+  { path: 'GET /zoning?parcel=...', note: 'different shape · different semantics' },
+  { path: 'GET /permits?parcel=...', note: 'different shape · different consistency' },
+  { path: 'GET /transit?near=...', note: 'different shape · different rate limits' },
+  { path: 'GET /311?parcel=...', note: 'different shape · different error model' },
+];
+---
+
+<section id="problem">
+  <div class="container problem-container">
+    <div class="problem-lede">
+      <span class="problem-marker mono">01 / the problem</span>
+      <p class="problem-opener">
+        Cities expose data through separate systems.
+      </p>
+      <p class="problem-question">
+        Try answering: <em>what's happening on this block?</em>
+      </p>
+      <p class="problem-fallout">
+        You end up pulling permits, zoning, transit, and 311 from different places.
+      </p>
+    </div>
+
+    <div class="endpoint-stack">
+      {endpoints.map((e) => (
+        <div class="endpoint-row">
+          <span class="endpoint-code mono">{e.path}</span>
+          <span class="endpoint-note">{e.note}</span>
+        </div>
+      ))}
+    </div>
+
+    <p class="problem-outro">
+      You stitch it together in the client.<br />
+      That logic gets copied into every consumer.
+    </p>
+  </div>
+</section>
+
+<style>
+  #problem {
+    padding: 72px 0 88px;
+  }
+
+  .problem-container {
+    max-width: 860px;
+  }
+
+  .problem-lede {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+
+  .problem-marker {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    opacity: 0.7;
+  }
+
+  .problem-opener {
+    font-size: clamp(1.5rem, 3.6vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--text);
+    max-width: 780px;
+  }
+
+  .problem-question {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+  }
+
+  .problem-question em {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  .problem-fallout {
+    font-size: 1.05rem;
+    color: var(--text);
+    line-height: 1.55;
+  }
+
+  .endpoint-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .endpoint-row {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .endpoint-row:last-child {
+    border-bottom: none;
+  }
+
+  .endpoint-code {
+    font-size: 0.85rem;
+    color: var(--text);
+    min-width: 240px;
+  }
+
+  .endpoint-note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .problem-outro {
+    margin-top: 36px;
+    font-size: 1rem;
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 720px;
+  }
+
+  @media (max-width: 640px) {
+    .endpoint-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+    }
+
+    .endpoint-code {
+      min-width: 0;
+    }
+  }
+</style>

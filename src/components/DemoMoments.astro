@@ -2,146 +2,174 @@
 const moments = [
   {
     num: '01',
-    title: 'One city, one graph',
+    title: 'One block, five systems',
     location: '16th & Mission',
-    punchline: 'Five data sources. One query. Zero client-side joins.',
-    description: 'A single query resolves a parcel with permits, zoning, transit stops, 311 cases, and census data — all from one endpoint.',
+    punchline: 'Five data sources. One query. No client joins.',
+    description: 'Resolve permits, zoning, transit, 311, and census in one query.',
   },
   {
     num: '02',
-    title: 'Same question, different answers',
+    title: 'Same query, different output',
     location: '16th & Mission',
-    punchline: 'Same query, three profiles, completely different results.',
-    description: 'Switch the profile header and watch fields appear and disappear. The urban planner sees zoning compliance; the resident sees walkability.',
+    punchline: '',
+    description: 'Planner sees zoning compliance. Resident sees walkability. Developer sees disruption risk.',
   },
   {
     num: '03',
-    title: 'Who needs this stop?',
-    location: 'Market & Van Ness',
-    punchline: 'Same Muni stop, two planners, two different answers.',
-    description: 'The accessibility advocate sees ADA boarding and wheelchair access. The transit planner sees headway stats and coverage gaps.',
-  },
-  {
-    num: '04',
     title: 'The invisible city',
     location: 'Outer Sunset',
-    punchline: 'The data you never knew was there.',
-    description: 'The environmental advocate reveals tree canopy coverage, green space access, and bike commute patterns — an entirely different San Francisco.',
-  },
-  {
-    num: '05',
-    title: 'Disruption radar',
-    location: 'Valencia Corridor',
-    punchline: 'Every permit and complaint that could affect your storefront.',
-    description: 'The small business owner queries a single block and sees active construction permits, 311 complaints, and foot traffic proxy — a disruption risk assessment.',
+    punchline: '',
+    description: 'Canopy coverage, green space access, commute patterns.',
   },
 ];
 ---
 
 <section id="demo">
-  <div class="container">
-    <span class="section-label">Demo</span>
-    <h2 class="section-title">Five Moments. One Story.</h2>
-    <p class="section-subtitle">
-      A narrative arc across four real San Francisco locations,
-      showing what a unified data graph makes possible.
-    </p>
+  <div class="demo-wrap">
+    <header class="demo-heading">
+      <span class="demo-marker mono">// demo</span>
+      <h2 class="demo-title">
+        These are compositions<br />
+        of the same graph.
+      </h2>
+    </header>
 
-    <div class="moments-list">
+    <ol class="moments">
       {moments.map((m) => (
-        <div class="moment-card">
-          <div class="moment-num mono">{m.num}</div>
-          <div class="moment-body">
-            <div class="moment-top">
-              <h3 class="moment-title">{m.title}</h3>
-              <span class="moment-location mono">{m.location}</span>
-            </div>
-            <p class="moment-desc">{m.description}</p>
-            <p class="moment-punchline">&ldquo;{m.punchline}&rdquo;</p>
+        <li class="moment">
+          <div class="moment-head">
+            <span class="moment-num mono">{m.num}</span>
+            <span class="moment-location mono">{m.location}</span>
           </div>
-        </div>
+          <h3 class="moment-title">{m.title}</h3>
+          <p class="moment-desc">{m.description}</p>
+          {m.punchline ? (
+            <p class="moment-punchline">&ldquo;{m.punchline}&rdquo;</p>
+          ) : null}
+        </li>
       ))}
-    </div>
+    </ol>
   </div>
 </section>
 
 <style>
-  .moments-list {
-    margin-top: 48px;
+  #demo {
+    padding: 120px 0;
+  }
+
+  .demo-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  .demo-heading {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
+    margin-bottom: 64px;
+    max-width: 640px;
   }
 
-  .moment-card {
+  .demo-marker {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    opacity: 0.6;
+  }
+
+  .demo-title {
+    font-size: clamp(1.8rem, 4vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+  }
+
+  .moments {
+    list-style: none;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .moment {
+    list-style: none;
+    padding: 56px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .moment-head {
     display: flex;
-    gap: 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 28px 24px;
-    transition: border-color 0.2s, background 0.2s;
-  }
-
-  .moment-card:hover {
-    border-color: var(--accent-dim);
-    background: var(--surface-hover);
+    align-items: baseline;
+    gap: 18px;
+    margin-bottom: 28px;
   }
 
   .moment-num {
-    font-size: 1.25rem;
+    font-size: 2.1rem;
     font-weight: 700;
     color: var(--accent);
-    opacity: 0.5;
-    flex-shrink: 0;
-    padding-top: 2px;
-  }
-
-  .moment-body {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-  }
-
-  .moment-top {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .moment-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.03em;
+    line-height: 1;
   }
 
   .moment-location {
-    font-size: 0.7rem;
-    color: var(--secondary);
-    background: var(--secondary-dim);
-    padding: 2px 8px;
-    border-radius: 3px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+
+  .moment-title {
+    font-size: clamp(1.35rem, 2.6vw, 1.75rem);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+    margin-bottom: 18px;
+    max-width: 680px;
   }
 
   .moment-desc {
-    font-size: 0.88rem;
+    font-size: 1.02rem;
     color: var(--text-muted);
-    line-height: 1.55;
+    line-height: 1.75;
+    max-width: 640px;
   }
 
   .moment-punchline {
-    font-size: 0.88rem;
+    font-size: 0.98rem;
     color: var(--accent);
     font-style: italic;
-    margin-top: 4px;
+    padding-left: 14px;
+    border-left: 2px solid var(--accent);
+    line-height: 1.6;
+    margin-top: 24px;
+    max-width: 640px;
   }
 
-  @media (max-width: 480px) {
-    .moment-card {
-      flex-direction: column;
-      gap: 12px;
+  @media (max-width: 640px) {
+    #demo {
+      padding: 80px 0;
+    }
+
+    .demo-heading {
+      margin-bottom: 48px;
+    }
+
+    .moment {
+      padding: 40px 0;
+    }
+
+    .moment-head {
+      margin-bottom: 22px;
+    }
+
+    .moment-num {
+      font-size: 1.75rem;
+    }
+
+    .moment-desc {
+      line-height: 1.7;
     }
   }
 </style>

@@ -4,42 +4,40 @@
 <section id="architecture">
   <div class="container">
     <span class="section-label">Architecture</span>
-    <h2 class="section-title">Two Clients. One Graph.</h2>
+    <h2 class="section-title">Modular inside. One graph outside.</h2>
     <p class="section-subtitle">
-      A browser-based map UI and an AI client via MCP consume the same
-      GraphQL endpoint — differentiated only by a profile header.
+      GraphQL handles querying.<br />
+      <span class="sub-accent">Viaduct handles composition.</span>
+    </p>
+    <p class="section-subtitle arch-lede">
+      Ownership lives in the modules. Not in a shared layer.
+    </p>
+    <p class="section-subtitle arch-lede">
+      Each domain defines its data and relationships.
+      Viaduct assembles the schema at runtime.
+    </p>
+    <p class="arch-punch mono">
+      No central team stitching everything together.
     </p>
 
     <div class="arch-diagram">
-      <div class="arch-clients">
+      <div class="arch-client-wrap">
         <div class="arch-client">
           <div class="client-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <rect x="2" y="3" width="20" height="14" rx="2" />
               <path d="M8 21h8M12 17v4" />
             </svg>
           </div>
-          <span class="client-name">Browser Client</span>
-          <span class="client-tech mono">MapLibre GL</span>
-          <span class="client-desc">Click, pan, search, compare layers on an interactive map</span>
-        </div>
-
-        <div class="arch-client">
-          <div class="client-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 2a8 8 0 0 1 8 8c0 3-1.5 5.5-4 7v3H8v-3c-2.5-1.5-4-4-4-7a8 8 0 0 1 8-8z" />
-              <path d="M10 22h4" />
-            </svg>
+          <div class="client-text">
+            <span class="client-name">Any client</span>
+            <span class="client-desc">browser, mobile, notebook, agent</span>
           </div>
-          <span class="client-name">AI Client</span>
-          <span class="client-tech mono">Claude via MCP</span>
-          <span class="client-desc">Natural language queries, multi-step reasoning, 11 tools</span>
         </div>
       </div>
 
       <div class="arch-connector">
-        <div class="connector-line"></div>
-        <div class="connector-line"></div>
+        <div class="connector-line single"></div>
       </div>
 
       <div class="arch-endpoint">
@@ -56,7 +54,7 @@
       <div class="arch-server">
         <div class="server-box">
           <span class="server-name">Viaduct Server</span>
-          <span class="server-tech mono">Kotlin/JVM</span>
+          <span class="server-tech mono">Kotlin/JVM · modular schema composition</span>
           <div class="server-modules">
             <span class="module-tag">:parcels</span>
             <span class="module-tag">:permits</span>
@@ -66,6 +64,7 @@
             <span class="module-tag">:environment</span>
             <span class="module-tag">:geography</span>
           </div>
+          <span class="server-note mono">[each module owned independently]  ·  [one unified schema]</span>
         </div>
       </div>
 
@@ -76,14 +75,155 @@
       <div class="arch-db">
         <div class="db-box">
           <span class="db-name">PostgreSQL + PostGIS</span>
-          <span class="db-detail mono">11 tables &middot; spatial indexes &middot; no runtime API calls</span>
         </div>
+      </div>
+    </div>
+
+    <div class="ownership-note">
+      <h3 class="ownership-headline">The difficult part was ownership.</h3>
+      <p class="ownership-sub">
+        Querying was straightforward. Defining ownership was not.
+      </p>
+      <p class="ownership-q">
+        Does a permit belong to <span class="mono">:parcels</span> or <span class="mono">:permits</span>?<br />
+        Where is that edge defined?<br />
+        Who is responsible when it breaks?
+      </p>
+    </div>
+
+    <div class="arch-notes">
+      <div class="note">
+        <span class="note-label mono">constraint</span>
+        <p>This demo uses offline data.</p>
+        <p class="note-dim">
+          Production adds failure modes:<br />
+          stale caches · partial failures · rate limits.
+        </p>
+      </div>
+      <div class="note">
+        <span class="note-label mono">tradeoff</span>
+        <p>Clear ownership improves the system.</p>
+        <p class="note-dim">It also requires discipline.</p>
+        <p class="note-dim">A shared schema still creates shared responsibility.</p>
       </div>
     </div>
   </div>
 </section>
 
 <style>
+  .section-subtitle em {
+    color: var(--text);
+    font-style: italic;
+  }
+
+  .sub-accent {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .arch-lede {
+    margin-top: 20px;
+  }
+
+  .arch-punch {
+    margin-top: 20px;
+    font-size: 0.88rem;
+    color: var(--text);
+    padding: 10px 16px;
+    border-left: 2px solid var(--accent);
+    background: var(--accent-dim);
+    border-radius: 0 4px 4px 0;
+    display: inline-block;
+  }
+
+  .ownership-note {
+    margin-top: 64px;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px 0 0 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .ownership-headline {
+    font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    line-height: 1.2;
+  }
+
+  .ownership-sub {
+    font-size: 1.05rem;
+    color: var(--text);
+    line-height: 1.55;
+    max-width: 600px;
+  }
+
+  .ownership-q {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    padding-top: 4px;
+  }
+
+  .ownership-q .mono {
+    color: var(--secondary);
+    font-size: 0.85rem;
+  }
+
+  .arch-notes {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 840px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .note {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--secondary);
+    border-radius: 8px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .note:first-child {
+    border-left-color: var(--accent);
+  }
+
+  .note-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .note p {
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.6;
+    font-weight: 500;
+  }
+
+  .note p.note-dim {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 0.88rem;
+  }
+
+  @media (max-width: 640px) {
+    .arch-notes {
+      grid-template-columns: 1fr;
+    }
+  }
+
   .arch-diagram {
     margin-top: 56px;
     display: flex;
@@ -92,29 +232,32 @@
     gap: 0;
   }
 
-  .arch-clients {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+  .arch-client-wrap {
     width: 100%;
     max-width: 640px;
   }
 
   .arch-client {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 24px 20px;
+    background: transparent;
+    border: none;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    padding: 16px 24px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
-    gap: 8px;
+    gap: 16px;
   }
 
   .client-icon {
     color: var(--secondary);
-    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+
+  .client-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 
   .client-name {
@@ -122,23 +265,13 @@
     font-size: 0.95rem;
   }
 
-  .client-tech {
-    font-size: 0.72rem;
-    color: var(--accent);
-    background: var(--accent-dim);
-    padding: 2px 8px;
-    border-radius: 3px;
-  }
-
   .client-desc {
     font-size: 0.8rem;
     color: var(--text-muted);
-    line-height: 1.45;
   }
 
   .arch-connector {
     display: flex;
-    gap: 120px;
     justify-content: center;
   }
 
@@ -223,20 +356,28 @@
     border-radius: 3px;
   }
 
+  .server-note {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
   .arch-db {
     width: 100%;
     max-width: 640px;
   }
 
   .db-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px 24px;
+    background: transparent;
+    border: none;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    padding: 16px 24px 0;
     text-align: center;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
   }
 
   .db-name {
@@ -247,15 +388,5 @@
   .db-detail {
     font-size: 0.72rem;
     color: var(--text-muted);
-  }
-
-  @media (max-width: 480px) {
-    .arch-clients {
-      grid-template-columns: 1fr;
-    }
-
-    .arch-connector {
-      gap: 0;
-    }
   }
 </style>

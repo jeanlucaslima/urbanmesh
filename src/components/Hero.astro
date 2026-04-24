@@ -23,50 +23,49 @@
   </div>
 
   <div class="container hero-content">
-    <div class="hero-badge">
-      <span class="mono">GraphQL Conf 2026</span>
+    <div class="hero-badges">
+      <span class="hero-badge mono">Open Source</span>
+      <a class="hero-badge mono" href="https://graphql.org/conf/2026/schedule/50d245b496fbe7e54087e218e9b4b60d/?name=Turning%20San%20Francisco%20Into%20a%20GraphQL%20Server%20-%20Jean%20Lucas%20Lima,%20ConfrariaTech" target="_blank" rel="noopener">GraphQL Conf 2026</a>
     </div>
 
-    <h1>
-      One Graph.<br />
-      Twelve Data Sources.<br />
-      <span class="accent">Every City Block in San Francisco.</span>
-    </h1>
+    <div class="hero-split">
+      <div class="hero-left">
+        <h1>
+          One Graph.<br />
+          Any City.<br />
+          <span class="accent">Every Data Source.</span>
+        </h1>
 
-    <p class="hero-sub">
-      A Viaduct-powered GraphQL API that federates 12 civic data sources
-      into a unified graph — serving both spatial UIs and AI clients
-      from a single endpoint.
-    </p>
+        <p class="hero-sub">
+          A <a href="https://viaduct.dev/" target="_blank" rel="noopener">Viaduct</a>-powered GraphQL graph over a whole city.<br />
+          One endpoint for maps, dashboards, and AI.
+        </p>
+      </div>
 
-    <div class="hero-stats">
-      <div class="stat">
-        <span class="stat-num">12</span>
-        <span class="stat-label">Data Sources</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat">
-        <span class="stat-num">8</span>
-        <span class="stat-label">User Profiles</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat">
-        <span class="stat-num">3.5M+</span>
-        <span class="stat-label">Records</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat">
-        <span class="stat-num">1</span>
-        <span class="stat-label">GraphQL Endpoint</span>
-      </div>
+      <aside class="hero-right">
+        <span class="hero-right-label mono">// what this does</span>
+        <p class="hero-grounding">
+          Answer complex questions about a city with a single query.
+        </p>
+        <p class="hero-tail">
+          Built from independently owned domains.<br />
+          Composed at runtime.
+        </p>
+
+        <div class="hero-stats">
+          <div class="stat"><span class="stat-num">12</span><span class="stat-label">data sources</span></div>
+          <div class="stat"><span class="stat-num">8</span><span class="stat-label">profiles</span></div>
+          <div class="stat"><span class="stat-num">3.5M+</span><span class="stat-label">records</span></div>
+          <div class="stat"><span class="stat-num">1</span><span class="stat-label">endpoint</span></div>
+        </div>
+      </aside>
     </div>
 
     <div class="hero-tech">
-      <span class="tech-tag">Viaduct</span>
+      <a class="tech-tag" href="https://viaduct.dev/" target="_blank" rel="noopener">Viaduct</a>
       <span class="tech-tag">Kotlin/JVM</span>
       <span class="tech-tag">PostgreSQL + PostGIS</span>
       <span class="tech-tag">MapLibre</span>
-      <span class="tech-tag">Claude MCP</span>
     </div>
   </div>
 </section>
@@ -100,11 +99,13 @@
     padding-bottom: 80px;
   }
 
-  .hero-badge {
+  .hero-badges {
+    display: flex;
+    gap: 8px;
     margin-bottom: 32px;
   }
 
-  .hero-badge .mono {
+  .hero-badge {
     font-size: 0.8rem;
     font-weight: 500;
     letter-spacing: 0.12em;
@@ -114,6 +115,19 @@
     border: 1px solid var(--accent-dim);
     border-radius: 4px;
     background: var(--accent-dim);
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .hero-badge:hover {
+    background: rgba(232, 197, 71, 0.22);
+    opacity: 1;
+  }
+
+  .hero-sub a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   h1 {
@@ -128,20 +142,62 @@
     color: var(--accent);
   }
 
+  .hero-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(240px, 1fr);
+    gap: 64px;
+    align-items: start;
+    margin-bottom: 48px;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-right {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .hero-right-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    opacity: 0.6;
+  }
+
   .hero-sub {
     font-size: 1.15rem;
     color: var(--text-muted);
     max-width: 560px;
     line-height: 1.65;
-    margin-bottom: 48px;
+    margin-bottom: 0;
+  }
+
+  .hero-grounding {
+    font-size: 0.98rem;
+    color: var(--text);
+    line-height: 1.5;
+    font-weight: 500;
+    padding-left: 12px;
+    border-left: 2px solid var(--accent);
+  }
+
+  .hero-tail {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.55;
   }
 
   .hero-stats {
-    display: flex;
-    align-items: center;
-    gap: 28px;
-    margin-bottom: 40px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 24px;
+    margin-top: 8px;
   }
 
   .stat {
@@ -151,9 +207,9 @@
   }
 
   .stat-num {
-    font-size: 1.75rem;
+    font-size: 1.35rem;
     font-weight: 700;
-    color: var(--text);
+    color: var(--accent);
     font-family: 'JetBrains Mono', monospace;
     letter-spacing: -0.02em;
   }
@@ -188,14 +244,22 @@
     letter-spacing: 0.02em;
   }
 
+  @media (max-width: 900px) {
+    .hero-split {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .hero-right {
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+  }
+
   @media (max-width: 768px) {
     .hero {
       min-height: auto;
       padding: 80px 0 60px;
-    }
-
-    .hero-stats {
-      gap: 20px;
     }
 
     .stat-divider {

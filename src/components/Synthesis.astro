@@ -1,0 +1,114 @@
+---
+const lines = [
+  { left: 'One query', right: 'resolves across systems' },
+  { left: 'One schema', right: 'serves different users' },
+  { left: 'One graph', right: 'supports both UI and AI' },
+];
+---
+
+<section id="synthesis">
+  <div class="container">
+    <div class="synth-wrap">
+      <h2 class="synth-intro">This shows what composition looks like in practice.</h2>
+      <div class="synth-lines">
+        {lines.map((l) => (
+          <div class="synth-line">
+            <span class="synth-left">{l.left}</span>
+            <span class="synth-arrow mono">→</span>
+            <span class="synth-right">{l.right}</span>
+          </div>
+        ))}
+      </div>
+
+      <p class="synth-closer">
+        A city behaves like a distributed system.<br />
+        This is one way to <span class="accent">structure</span> it.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  #synthesis {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 20% 0%, var(--accent-dim), transparent 50%),
+      radial-gradient(circle at 80% 100%, var(--secondary-dim), transparent 50%);
+  }
+
+  .synth-wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+  }
+
+  .synth-intro {
+    font-size: clamp(1.5rem, 3.2vw, 2.25rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: -16px;
+  }
+
+  .synth-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .synth-line {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: baseline;
+    gap: 24px;
+    font-size: clamp(1.25rem, 2.6vw, 1.85rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .synth-left {
+    text-align: right;
+    color: var(--text);
+  }
+
+  .synth-arrow {
+    color: var(--accent);
+    font-weight: 400;
+  }
+
+  .synth-right {
+    text-align: left;
+    color: var(--text-muted);
+  }
+
+  .synth-closer {
+    font-size: clamp(1.05rem, 2vw, 1.35rem);
+    line-height: 1.5;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .accent {
+    color: var(--accent);
+  }
+
+  @media (max-width: 480px) {
+    .synth-line {
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+
+    .synth-left,
+    .synth-right {
+      text-align: center;
+    }
+
+    .synth-arrow {
+      display: none;
+    }
+  }
+</style>

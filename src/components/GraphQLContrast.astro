@@ -1,0 +1,192 @@
+---
+---
+
+<section id="graphql-contrast">
+  <div class="container">
+    <span class="section-label">The Solution</span>
+    <h2 class="section-title">Five systems. One query.</h2>
+    <p class="section-subtitle">
+      Stop stitching endpoints.
+    </p>
+    <p class="contrast-lede">
+      Ask for the shape you need.<br />
+      Resolve it in one place.
+    </p>
+
+    <div class="contrast-grid">
+      <div class="contrast-arrow mono" aria-hidden="true">→ → →</div>
+      <div class="contrast-col rest">
+        <div class="contrast-head">
+          <span class="contrast-label mono">REST</span>
+          <span class="contrast-tag">5 calls · 5 shapes</span>
+        </div>
+        <pre class="code-block"><code>GET /parcels/:id
+GET /zoning?parcel=...
+GET /permits?parcel=...
+GET /transit?near=...
+GET /311?parcel=...
+
+// client joins everything</code></pre>
+      </div>
+
+      <div class="contrast-col graphql">
+        <div class="contrast-head">
+          <span class="contrast-label mono accent">GraphQL</span>
+          <span class="contrast-tag accent">1 call · 1 shape</span>
+        </div>
+        <pre class="code-block"><code>query BlockContext($id: ID!) &#123;
+  parcel(id: $id) &#123;
+    address
+    zoning &#123; allowedUses &#125;
+    permits &#123; status issuedAt &#125;
+    nearbyTransit &#123; stops &#123; name &#125; &#125;
+    complaints &#123; count openCount &#125;
+  &#125;
+&#125;</code></pre>
+      </div>
+    </div>
+
+    <p class="contrast-caption">
+      GraphQL moves the join into the server.
+    </p>
+    <p class="contrast-closer">
+      Same data. Same database.<br />
+      What changes is where the <em>composition</em> happens.
+    </p>
+  </div>
+</section>
+
+<style>
+  .contrast-grid {
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    position: relative;
+  }
+
+  .contrast-arrow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1rem;
+    color: var(--accent);
+    background: var(--bg);
+    padding: 8px 12px;
+    border-radius: 6px;
+    letter-spacing: 0.08em;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  @media (max-width: 768px) {
+    .contrast-arrow {
+      position: static;
+      transform: none;
+      text-align: center;
+      display: block;
+      padding: 4px 0;
+    }
+  }
+
+  .contrast-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .contrast-col.graphql {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 0 1px var(--accent-dim);
+  }
+
+  .contrast-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  .contrast-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .contrast-label.accent {
+    color: var(--accent);
+  }
+
+  .contrast-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .contrast-tag.accent {
+    color: var(--accent);
+  }
+
+  .code-block {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--text);
+    padding: 20px;
+    overflow-x: auto;
+    margin: 0;
+    white-space: pre;
+    flex: 1;
+  }
+
+  .contrast-col.rest .code-block {
+    color: var(--text-muted);
+  }
+
+  .contrast-lede {
+    margin-top: 16px;
+    font-size: 1.05rem;
+    color: var(--text);
+    line-height: 1.6;
+    font-weight: 500;
+  }
+
+  .contrast-caption {
+    text-align: center;
+    margin-top: 32px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+
+  .contrast-closer {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .contrast-closer em {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .contrast-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .code-block {
+      font-size: 0.78rem;
+    }
+  }
+</style>
