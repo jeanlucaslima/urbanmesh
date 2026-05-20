@@ -25,31 +25,41 @@ export default function App() {
       setResult(res);
     } catch (e: any) {
       setResult(null);
-      setError(e?.message || "The agent could not complete the request. Check service health and verification.");
+      setError(
+        e?.message ||
+          "The agent service is unavailable. Check docker compose and ./scripts/verify.sh."
+      );
     } finally {
       setLoading(false);
     }
   }
 
+  const roleNote = result
+    ? actorRole === "ADMIN"
+      ? "This role received the full sensitive context."
+      : "This role received a policy-filtered view."
+    : null;
+
   return (
     <div className="app">
       <header>
         <h1>Viaduct Agent Demo</h1>
-        <p className="subtitle">
-          UI and AI clients use the same GraphQL endpoint.
+        <p className="subtitle">The agent is just another GraphQL client.</p>
+        <p className="tagline">
+          One endpoint. Many services. Policy-aware execution.
         </p>
       </header>
 
-      <section className="grid">
-        <div className="card">
-          <h2>Task</h2>
-          <textarea
-            value={task}
-            onChange={(e) => setTask(e.target.value)}
-            rows={4}
-            placeholder="Explain customer C-1027 risk"
-          />
-          <label>
+      <section className="controls card">
+        <h2>Task</h2>
+        <textarea
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+          rows={2}
+          placeholder="Explain customer C-1027 risk"
+        />
+        <div className="controls-row">
+          <label className="role-label">
             Actor role
             <select
               value={actorRole}
@@ -61,79 +71,104 @@ export default function App() {
             </select>
           </label>
           <button onClick={onRun} disabled={loading}>
-            {loading ? "Running…" : "Run through Viaduct"}
+            {loading ? "Running through Viaduct…" : "Run through Viaduct"}
           </button>
-          {error && <p className="error">{error}</p>}
         </div>
+        {error && <p className="error">{error}</p>}
+      </section>
 
+      <section className="grid-main">
         <div className="card">
           <h2>Answer</h2>
           {result ? (
-            <pre className="answer">{result.answer}</pre>
+            <>
+              <pre className="answer">{result.answer}</pre>
+              {roleNote && <p className="role-note">{roleNote}</p>}
+            </>
           ) : (
             <p className="muted">Run a task to see the answer.</p>
           )}
         </div>
 
-        <div className="card">
-          <h2>GraphQL query</h2>
-          <pre>{result?.query || "—"}</pre>
-          {result && (
-            <>
-              <h3>Variables</h3>
-              <pre>{JSON.stringify(result.variables, null, 2)}</pre>
-            </>
-          )}
-        </div>
+        <div className="card evidence">
+          <h2>Execution Evidence</h2>
+          <p className="proof">
+            The agent only calls <code>/graphql</code>. No direct calls to
+            customer, billing, support, usage, or policy services.
+          </p>
 
-        <div className="card">
-          <h2>Execution metadata</h2>
+          <h3>Services coordinated by the graph</h3>
+          <p className="hint">What the graph had to call.</p>
           {result ? (
-            <>
-              <h3>Services touched</h3>
-              {result.executionMetadata.servicesTouched.length === 0 ? (
-                <p className="muted">none</p>
-              ) : (
-                <ul>
-                  {result.executionMetadata.servicesTouched.map((s) => (
-                    <li key={s}><code>{s}</code></li>
-                  ))}
-                </ul>
-              )}
+            result.executionMetadata.servicesTouched.length === 0 ? (
+              <p className="muted">none</p>
+            ) : (
+              <div className="chips">
+                {result.executionMetadata.servicesTouched.map((s) => (
+                  <span className="chip" key={s}>{s}</span>
+                ))}
+              </div>
+            )
+          ) : (
+            <p className="muted">—</p>
+          )}
 
-              <h3>Blocked fields</h3>
-              {result.executionMetadata.blockedFields.length === 0 ? (
-                <p className="muted">none — all requested fields allowed</p>
-              ) : (
-                <ul>
-                  {result.executionMetadata.blockedFields.map((f) => (
-                    <li key={f}><code>{f}</code></li>
-                  ))}
-                </ul>
-              )}
+          <h3>Blocked fields</h3>
+          <p className="hint">What policy removed.</p>
+          {result ? (
+            result.executionMetadata.blockedFields.length === 0 ? (
+              <p className="empty-ok">No blocked fields</p>
+            ) : (
+              <ul className="blocked">
+                {result.executionMetadata.blockedFields.map((f) => (
+                  <li key={f}><code>{f}</code></li>
+                ))}
+              </ul>
+            )
+          ) : (
+            <p className="muted">—</p>
+          )}
 
-              <h3>Policy decisions</h3>
-              {result.executionMetadata.policyDecisions.length === 0 ? (
-                <p className="muted">none</p>
-              ) : (
-                <ul className="policy">
-                  {result.executionMetadata.policyDecisions.map((p, i) => (
-                    <li key={i} className={p.decision === "ALLOW" ? "allow" : "deny"}>
-                      <strong>{p.decision}</strong> <code>{p.field}</code> — {p.reason}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
+          <h3>Policy decisions</h3>
+          <p className="hint">Why each sensitive field was allowed or denied.</p>
+          {result ? (
+            result.executionMetadata.policyDecisions.length === 0 ? (
+              <p className="muted">none</p>
+            ) : (
+              <ul className="policy">
+                {result.executionMetadata.policyDecisions.map((p, i) => (
+                  <li key={i} className={p.decision === "ALLOW" ? "allow" : "deny"}>
+                    <span className="badge">
+                      {p.decision === "ALLOW" ? "✓ ALLOW" : "✗ DENY"}
+                    </span>
+                    <code>{p.field}</code>
+                    <span className="reason">{p.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            )
           ) : (
             <p className="muted">—</p>
           )}
         </div>
       </section>
 
+      <section className="card">
+        <h2>Generated GraphQL query</h2>
+        <p className="hint">The agent sends this to Viaduct <code>/graphql</code>.</p>
+        <pre className="gql">{result?.query || "—"}</pre>
+        {result && (
+          <>
+            <h3>Variables</h3>
+            <pre>{JSON.stringify(result.variables, null, 2)}</pre>
+          </>
+        )}
+      </section>
+
       <footer>
-        The agent only calls <code>/graphql</code>. Internal systems are reached
-        through Viaduct tenant resolvers.
+        <strong>Architecture proof:</strong> the agent only calls{" "}
+        <code>/graphql</code>. Internal services are reached through Viaduct
+        tenant resolvers.
       </footer>
     </div>
   );
