@@ -40,7 +40,7 @@ require_no_errors() {
 
 GQL='http://localhost:8080/graphql'
 
-section "[1/11] Checking Docker Compose services"
+section "[1/12] Checking Docker Compose services"
 
 EXPECTED_SERVICES=(
   "postgres"
@@ -56,7 +56,7 @@ for svc in "${EXPECTED_SERVICES[@]}"; do
 done
 docker compose ps
 
-section "[2/11] Checking health endpoints"
+section "[2/12] Checking health endpoints"
 
 require_url_ok http://localhost:8080/health
 require_url_ok http://localhost:5101/health
@@ -75,7 +75,7 @@ require_contains /tmp/h_billing.json   '"billing-service"'
 require_contains /tmp/h_support.json   '"support-service"'
 require_contains /tmp/h_usage.json     '"usage-service"'
 
-section "[3/11] Checking Postgres seed data"
+section "[3/12] Checking Postgres seed data"
 
 docker compose exec -T postgres psql -U demo -d demo -c "\dt" > /tmp/tables.txt
 require_contains /tmp/tables.txt customers
@@ -93,7 +93,7 @@ require_contains /tmp/customers.txt 'HEALTHY'
 require_contains /tmp/customers.txt 'RISKY'
 require_contains /tmp/customers.txt 'RESTRICTED'
 
-section "[4/11] Checking internal services directly"
+section "[4/12] Checking internal services directly"
 
 curl -fsS http://localhost:5101/customers/C-1027 > /tmp/d_customer.json
 require_contains /tmp/d_customer.json 'AcmeCloud'
@@ -108,7 +108,7 @@ require_contains /tmp/d_support.json '"severity"'
 curl -fsS http://localhost:5104/usage/customers/C-1027 > /tmp/d_usage.json
 require_contains /tmp/d_usage.json '"declining"'
 
-section "[5/11] Viaduct customer-only query"
+section "[5/12] Viaduct customer-only query"
 
 curl -fsS -X POST "$GQL" -H 'Content-Type: application/json' \
   -d '{"query":"query { customer(id: \"C-1027\") { id name status riskLevel } }"}' \
@@ -119,7 +119,7 @@ require_contains /tmp/q_customer.json '"AcmeCloud"'
 require_contains /tmp/q_customer.json '"RISKY"'
 require_contains /tmp/q_customer.json '"riskLevel"'
 
-section "[6/11] Viaduct customer + billing"
+section "[6/12] Viaduct customer + billing"
 
 curl -fsS -X POST "$GQL" -H 'Content-Type: application/json' \
   -d '{"query":"query { customer(id: \"C-1027\") { id billing { balance overdueInvoices paymentRisk } } }"}' \
@@ -130,7 +130,7 @@ require_contains /tmp/q_billing.json '"overdueInvoices"'
 require_contains /tmp/q_billing.json '"paymentRisk"'
 require_contains /tmp/q_billing.json '"HIGH"'
 
-section "[7/11] Viaduct customer + support"
+section "[7/12] Viaduct customer + support"
 
 curl -fsS -X POST "$GQL" -H 'Content-Type: application/json' \
   -d '{"query":"query { customer(id: \"C-1027\") { id support { openTickets latestIssue escalationStatus } } }"}' \
@@ -140,7 +140,7 @@ require_contains /tmp/q_support.json '"openTickets"'
 require_contains /tmp/q_support.json '"latestIssue"'
 require_contains /tmp/q_support.json '"ESCALATED"'
 
-section "[8/11] Viaduct customer + usage"
+section "[8/12] Viaduct customer + usage"
 
 curl -fsS -X POST "$GQL" -H 'Content-Type: application/json' \
   -d '{"query":"query { customer(id: \"C-1027\") { id usage { activeUsers monthlyEvents usageTrend } } }"}' \
@@ -150,7 +150,7 @@ require_contains /tmp/q_usage.json '"activeUsers"'
 require_contains /tmp/q_usage.json '"monthlyEvents"'
 require_contains /tmp/q_usage.json '"declining"'
 
-section "[9/11] Viaduct full customer context"
+section "[9/12] Viaduct full customer context"
 
 curl -fsS -X POST "$GQL" -H 'Content-Type: application/json' \
   -d '{"query":"query CustomerContext { customer(id: \"C-1027\") { id name status riskLevel billing { balance overdueInvoices paymentRisk } support { openTickets latestIssue escalationStatus } usage { activeUsers monthlyEvents usageTrend } } }"}' \
@@ -162,21 +162,57 @@ require_contains /tmp/q_full.json '"openTickets"'
 require_contains /tmp/q_full.json '"activeUsers"'
 require_contains /tmp/q_full.json '"riskLevel"'
 
-section "[10/11] Apollo absence in active root"
+section "[10/12] Apollo absence in active runtime"
 
-APOLLO_PATTERN='@apollo/server\|expressMiddleware\|graphql-gateway\|ApolloServer'
+# Forbidden tokens in any active runtime/config file.
+# Skills docs and AGENTS.md intentionally name these tokens to describe
+# the rule itself, so they are excluded along with the verify script.
+APOLLO_PATTERN='@apollo/server\|expressMiddleware\|graphql-gateway\|ApolloServer\|apollo-server'
 MATCHES=$(grep -RIn \
   --exclude-dir=prototype-apollo --exclude-dir=.git \
   --exclude-dir=node_modules --exclude-dir=build --exclude-dir=.gradle \
-  --exclude=verify.sh "$APOLLO_PATTERN" . 2>/dev/null || true)
+  --exclude-dir=.skills --exclude-dir=.viaduct \
+  --exclude=verify.sh --exclude=AGENTS.md \
+  "$APOLLO_PATTERN" . 2>/dev/null || true)
 if [ -n "$MATCHES" ]; then
   echo "$MATCHES"
-  fail "Active root runtime references Apollo. Move references under prototype-apollo/."
+  fail "Active runtime references Apollo. Move references under prototype-apollo/ or remove."
 fi
 
-section "[11/11] prototype-apollo preserved and ignored"
+section "[11/12] prototype-apollo preserved and ignored"
 
 [ -d prototype-apollo ] || fail "prototype-apollo/ directory missing."
-echo "prototype-apollo/ present and excluded from active checks."
+[ -f prototype-apollo/README.md ] || fail "prototype-apollo/README.md missing."
+grep -qi 'reference only\|archived\|not part of the active demo' prototype-apollo/README.md \
+  || fail "prototype-apollo/README.md does not mark itself as reference-only."
+echo "prototype-apollo/ present, marked reference-only, and excluded from active checks."
+
+section "[12/12] Agent skills & architecture guardrails"
+
+[ -f AGENTS.md ] || fail "AGENTS.md missing."
+grep -q 'Viaduct-first\|Ktor-hosted Viaduct' AGENTS.md \
+  || fail "AGENTS.md does not declare the active Viaduct architecture."
+
+CORE_SKILLS=(
+  ".skills/project-architecture.md"
+  ".skills/prd-implementation.md"
+  ".skills/commit-cadence.md"
+  ".skills/verification-qa.md"
+  ".skills/viaduct-kotlin-ktor.md"
+)
+for f in "${CORE_SKILLS[@]}"; do
+  [ -f "$f" ] || fail "Missing required local skill: $f"
+done
+
+# Vendored Viaduct framework skills (PRD C commit 3).
+if [ -d .viaduct/agents ]; then
+  for f in mutations.md query-resolver.md field-resolver.md node-type.md \
+           batch.md relationships.md scopes.md; do
+    [ -f ".viaduct/agents/$f" ] || fail "Missing vendored Viaduct skill: .viaduct/agents/$f"
+  done
+  echo "Vendored Viaduct framework skills present at .viaduct/agents/"
+else
+  echo "NOTE: .viaduct/agents/ not present (skills not vendored in this checkout)."
+fi
 
 section "All checks passed"

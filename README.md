@@ -157,9 +157,29 @@ sees one composed response.
 ./scripts/verify.sh
 ```
 
-11 stages check: compose services up, all healths, Postgres seed,
-direct service responses, all GraphQL composition queries, and the
-Apollo-absence + prototype-preserved guardrails.
+12 stages check: compose services up, all healths, Postgres seed,
+direct service responses, all GraphQL composition queries, the
+Apollo-absence guardrail, the prototype-preserved guardrail, and the
+agent-skills/architecture guardrail.
+
+## Agent workflow
+
+Before coding, read [`AGENTS.md`](AGENTS.md).
+
+This repo uses two layers of agent guidance:
+
+- **Viaduct framework skills** vendored under [`.viaduct/agents/`](.viaduct/agents/)
+  from [`viaduct-dev/skills`](https://github.com/viaduct-dev/skills). They cover
+  query resolvers, field resolvers, node types, batching, mutations,
+  connections, relationships, and scopes.
+- **Local project skills** under [`.skills/`](.skills/) defining this repo's
+  architecture, PRD workflow, commit cadence, verification requirements,
+  and demo constraints.
+
+When framework and local guidance conflict, local wins.
+
+The Apollo prototype is archived under [`prototype-apollo/`](prototype-apollo/)
+and is not part of the active demo.
 
 ## Out of scope (deferred to later PRDs)
 
