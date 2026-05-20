@@ -1,6 +1,7 @@
 package com.example.viadapp.resolvers.support
 
 import com.example.viadapp.resolvers.internal.InternalClient
+import com.example.viadapp.resolvers.internal.PolicyClient
 import com.example.viadapp.resolvers.internal.ServiceUrls
 import com.example.viadapp.resolvers.resolverbases.CustomerResolvers
 import viaduct.api.grts.SupportSummary
@@ -11,6 +12,7 @@ class CustomerSupportResolver : CustomerResolvers.Support() {
     override suspend fun resolve(ctx: Context): SupportSummary? {
         val customerId = ctx.getObjectValue().getId()
         val node = InternalClient.getJson(
+            "support-service",
             "${ServiceUrls.support}/support/customers/$customerId/tickets"
         ) ?: return null
 
@@ -25,11 +27,16 @@ class CustomerSupportResolver : CustomerResolvers.Support() {
         val latest = openTickets.maxByOrNull { severityRank(it["severity"]?.asText()) }
         val latestIssue = latest?.get("title")?.takeUnless { it.isNull }?.asText()
 
-        val escalationStatus = when {
+        val rawEscalation = when {
             highSev -> "ESCALATED"
             medSev -> "MONITORING"
             openTickets.isNotEmpty() -> "NORMAL"
             else -> "NONE"
+        }
+        val escalationStatus = if (PolicyClient.isAllowed("SupportSummary.escalationStatus", customerId)) {
+            rawEscalation
+        } else {
+            null
         }
 
         return SupportSummary.of(ctx) {

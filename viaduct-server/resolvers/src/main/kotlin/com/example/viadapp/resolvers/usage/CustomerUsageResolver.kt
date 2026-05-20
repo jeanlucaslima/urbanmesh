@@ -11,6 +11,7 @@ class CustomerUsageResolver : CustomerResolvers.Usage() {
     override suspend fun resolve(ctx: Context): UsageSummary? {
         val customerId = ctx.getObjectValue().getId()
         val node = InternalClient.getJson(
+            "usage-service",
             "${ServiceUrls.usage}/usage/customers/$customerId"
         ) ?: return null
 

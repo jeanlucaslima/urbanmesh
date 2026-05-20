@@ -12,7 +12,11 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import com.example.viadapp.resolvers.internal.RequestState
+import com.example.viadapp.resolvers.internal.RequestStateHolder
+import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.withContext
 import viaduct.service.BasicViaductFactory
 import viaduct.service.SchemaScopeInfo
 import viaduct.service.api.ExecutionInput
@@ -67,7 +71,15 @@ fun Application.configureRouting() {
                     variables = (request["variables"] as? Map<String, Any>) ?: emptyMap(),
                 )
 
-                val result: ExecutionResult = viaduct.executeAsync(executionInput).await()
+                // Fresh per-request state so concurrent requests do not share
+                // accumulated metadata. Propagated to resolvers via a
+                // ThreadLocal-backed coroutine context element.
+                val state = RequestState()
+                val result: ExecutionResult = withContext(
+                    RequestStateHolder.tl.asContextElement(state)
+                ) {
+                    viaduct.executeAsync(executionInput).await()
+                }
                 call.respond(result.toSpecification())
             }
         }
