@@ -10,6 +10,9 @@ import viaduct.api.resolver.Resolver
 class CustomerResolver : QueryResolvers.Customer() {
     override suspend fun resolve(ctx: Context): Customer? {
         val id = ctx.arguments.id
+        // actorRole is read for future policy enforcement (C3). Accessing it
+        // here also validates the generated enum surface compiles.
+        val actorRole = ctx.arguments.actorRole.toString()
         val node = InternalClient.getJson("${ServiceUrls.customer}/customers/$id") ?: return null
         return Customer.of(ctx) {
             id(node["id"].asText())

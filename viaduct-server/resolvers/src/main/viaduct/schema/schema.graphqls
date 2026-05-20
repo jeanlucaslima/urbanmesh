@@ -1,6 +1,13 @@
 extend type Query {
   greeting: String @resolver
-  customer(id: ID!): Customer @resolver
+  customer(id: ID!, actorRole: ActorRole!): Customer @resolver
+}
+
+enum ActorRole {
+  AI_ASSISTANT
+  SUPPORT_AGENT
+  FINANCE_AGENT
+  ADMIN
 }
 
 type Customer {
