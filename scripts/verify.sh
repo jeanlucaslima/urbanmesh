@@ -51,8 +51,9 @@ require_no_errors() {
 }
 
 GQL='http://localhost:8080/graphql'
+AGENT='http://localhost:5005'
 
-# Re-usable query body for the full customer context. $1 = actorRole literal.
+# Re-usable GraphQL query body for the full customer context. $1 = actorRole.
 full_query() {
   local role="$1"
   cat <<EOF
@@ -60,7 +61,7 @@ full_query() {
 EOF
 }
 
-section "[1/14] Checking Docker Compose services"
+section "[1/19] Checking Docker Compose services"
 
 EXPECTED_SERVICES=(
   "postgres"
@@ -70,6 +71,8 @@ EXPECTED_SERVICES=(
   "usage-service"
   "policy-service"
   "viaduct-server"
+  "agent-orchestrator"
+  "frontend"
 )
 RUNNING_SERVICES="$(docker compose ps --services)"
 for svc in "${EXPECTED_SERVICES[@]}"; do
@@ -77,7 +80,7 @@ for svc in "${EXPECTED_SERVICES[@]}"; do
 done
 docker compose ps
 
-section "[2/14] Checking health endpoints"
+section "[2/19] Checking health endpoints"
 
 require_url_ok http://localhost:8080/health
 require_url_ok http://localhost:5101/health
@@ -85,6 +88,8 @@ require_url_ok http://localhost:5102/health
 require_url_ok http://localhost:5103/health
 require_url_ok http://localhost:5104/health
 require_url_ok http://localhost:5105/health
+require_url_ok http://localhost:5005/health
+require_url_ok http://localhost:3000
 
 curl -fsS http://localhost:8080/health  > /tmp/h_viaduct.json
 curl -fsS http://localhost:5101/health  > /tmp/h_customer.json
@@ -92,14 +97,16 @@ curl -fsS http://localhost:5102/health  > /tmp/h_billing.json
 curl -fsS http://localhost:5103/health  > /tmp/h_support.json
 curl -fsS http://localhost:5104/health  > /tmp/h_usage.json
 curl -fsS http://localhost:5105/health  > /tmp/h_policy.json
+curl -fsS http://localhost:5005/health  > /tmp/h_agent.json
 require_contains /tmp/h_viaduct.json   '"viaduct-server"'
 require_contains /tmp/h_customer.json  '"customer-service"'
 require_contains /tmp/h_billing.json   '"billing-service"'
 require_contains /tmp/h_support.json   '"support-service"'
 require_contains /tmp/h_usage.json     '"usage-service"'
 require_contains /tmp/h_policy.json    '"policy-service"'
+require_contains /tmp/h_agent.json     '"agent-orchestrator"'
 
-section "[3/14] Checking Postgres seed data"
+section "[3/19] Checking Postgres seed data"
 
 docker compose exec -T postgres psql -U demo -d demo -c "\dt" > /tmp/tables.txt
 require_contains /tmp/tables.txt customers
@@ -114,7 +121,7 @@ for id in C-1001 C-1027 C-2044; do
   require_contains /tmp/customers.txt "$id"
 done
 
-section "[4/14] Checking internal services directly"
+section "[4/19] Checking internal services directly"
 
 curl -fsS http://localhost:5101/customers/C-1027 > /tmp/d_customer.json
 require_contains /tmp/d_customer.json 'AcmeCloud'
@@ -129,7 +136,7 @@ require_contains /tmp/d_support.json '"severity"'
 curl -fsS http://localhost:5104/usage/customers/C-1027 > /tmp/d_usage.json
 require_contains /tmp/d_usage.json '"declining"'
 
-section "[5/14] Checking policy-service /check"
+section "[5/19] Checking policy-service /check"
 
 curl -fsS -X POST http://localhost:5105/check -H 'Content-Type: application/json' \
   -d '{"actorRole":"AI_ASSISTANT","field":"BillingAccount.balance","customerId":"C-1027"}' \
@@ -156,7 +163,7 @@ curl -fsS -X POST http://localhost:5105/check -H 'Content-Type: application/json
   > /tmp/p_finance_esc.json
 require_contains /tmp/p_finance_esc.json '"allowed":false'
 
-section "[6/14] Viaduct customer-only query with actorRole"
+section "[6/19] Viaduct customer-only query with actorRole"
 
 curl -fsS -X POST "$GQL" -H 'Content-Type: application/json' \
   -d '{"query":"query { customer(id: \"C-1027\", actorRole: ADMIN) { id name status riskLevel } }"}' \
@@ -166,7 +173,7 @@ require_contains /tmp/q_co.json '"AcmeCloud"'
 require_contains /tmp/q_co.json '"RISKY"'
 require_contains /tmp/q_co.json '"HIGH"'
 
-section "[7/14] Viaduct full query as AI_ASSISTANT"
+section "[7/19] Viaduct full query as AI_ASSISTANT"
 
 curl -fsS -X POST "$GQL" -H 'Content-Type: application/json' \
   --data-binary "$(full_query AI_ASSISTANT)" > /tmp/q_ai.json
@@ -177,7 +184,7 @@ require_contains /tmp/q_ai.json '"balance" *: *null'
 require_contains /tmp/q_ai.json '"paymentRisk" *: *null'
 require_contains /tmp/q_ai.json '"escalationStatus" *: *null'
 
-section "[8/14] Viaduct full query as ADMIN"
+section "[8/19] Viaduct full query as ADMIN"
 
 curl -fsS -X POST "$GQL" -H 'Content-Type: application/json' \
   --data-binary "$(full_query ADMIN)" > /tmp/q_admin.json
@@ -189,7 +196,7 @@ require_not_contains /tmp/q_admin.json '"paymentRisk" *: *null'
 require_not_contains /tmp/q_admin.json '"escalationStatus" *: *null'
 require_contains /tmp/q_admin.json '"ESCALATED"'
 
-section "[9/14] Viaduct full query as SUPPORT_AGENT"
+section "[9/19] Viaduct full query as SUPPORT_AGENT"
 
 curl -fsS -X POST "$GQL" -H 'Content-Type: application/json' \
   --data-binary "$(full_query SUPPORT_AGENT)" > /tmp/q_support.json
@@ -200,7 +207,7 @@ require_not_contains /tmp/q_support.json '"escalationStatus" *: *null'
 require_contains /tmp/q_support.json '"ESCALATED"'
 require_not_contains /tmp/q_support.json '"riskLevel" *: *null'
 
-section "[10/14] Viaduct full query as FINANCE_AGENT"
+section "[10/19] Viaduct full query as FINANCE_AGENT"
 
 curl -fsS -X POST "$GQL" -H 'Content-Type: application/json' \
   --data-binary "$(full_query FINANCE_AGENT)" > /tmp/q_finance.json
@@ -209,7 +216,7 @@ require_contains /tmp/q_finance.json '"escalationStatus" *: *null'
 require_not_contains /tmp/q_finance.json '"balance" *: *null'
 require_not_contains /tmp/q_finance.json '"paymentRisk" *: *null'
 
-section "[11/14] Execution metadata in extensions"
+section "[11/19] Execution metadata in extensions"
 
 for f in customer-service billing-service support-service usage-service policy-service; do
   require_contains /tmp/q_ai.json "\"$f\""
@@ -224,7 +231,71 @@ require_contains /tmp/q_admin.json '"blockedFields" *: *\[ *\]'
 require_contains /tmp/q_admin.json '"decision" *: *"ALLOW"'
 require_not_contains /tmp/q_admin.json '"decision" *: *"DENY"'
 
-section "[12/14] Apollo absence in active runtime"
+section "[12/19] Agent /run AI_ASSISTANT"
+
+curl -fsS -X POST "$AGENT/run" -H 'Content-Type: application/json' \
+  -d '{"task":"Explain customer C-1027 risk","actorRole":"AI_ASSISTANT"}' \
+  > /tmp/a_ai.json
+require_contains /tmp/a_ai.json '"answer"'
+require_contains /tmp/a_ai.json '"query"'
+require_contains /tmp/a_ai.json '"variables"'
+require_contains /tmp/a_ai.json '"executionMetadata"'
+require_contains /tmp/a_ai.json '"id" *: *"C-1027"'
+require_contains /tmp/a_ai.json '"actorRole" *: *"AI_ASSISTANT"'
+require_contains /tmp/a_ai.json '"AcmeCloud"'
+# Required AI denials surfaced in metadata
+for f in Customer.riskLevel BillingAccount.balance BillingAccount.paymentRisk SupportSummary.escalationStatus; do
+  require_contains /tmp/a_ai.json "\"$f\""
+done
+require_contains /tmp/a_ai.json 'restricted'
+
+section "[13/19] Agent /run ADMIN"
+
+curl -fsS -X POST "$AGENT/run" -H 'Content-Type: application/json' \
+  -d '{"task":"Explain customer C-1027 risk","actorRole":"ADMIN"}' \
+  > /tmp/a_admin.json
+require_contains /tmp/a_admin.json '"AcmeCloud"'
+require_contains /tmp/a_admin.json '"blockedFields" *: *\[ *\]'
+# No-blocked answer language
+require_contains /tmp/a_admin.json 'No fields were blocked'
+
+section "[14/19] Agent /run missing customer ID"
+
+curl -s -X POST "$AGENT/run" -H 'Content-Type: application/json' \
+  -d '{"task":"Explain risk","actorRole":"AI_ASSISTANT"}' \
+  > /tmp/a_missing.json
+require_contains /tmp/a_missing.json '"missing_customer_id"'
+# The agent must not have called Viaduct: response must not contain Viaduct data shape.
+require_not_contains /tmp/a_missing.json '"executionMetadata"'
+
+section "[15/19] Frontend reachable"
+
+curl -fsS http://localhost:3000 > /tmp/f_index.html
+require_contains /tmp/f_index.html '<div id="root">'
+require_contains /tmp/f_index.html 'Viaduct Agent Demo'
+
+section "[16/19] Architecture constraint: agent source"
+
+INTERNAL_PATTERN='customer-service\|billing-service\|support-service\|usage-service\|policy-service'
+MATCHES=$(grep -RIn \
+  --exclude-dir=node_modules --exclude-dir=build --exclude-dir=.gradle \
+  "$INTERNAL_PATTERN" apps/agent-orchestrator 2>/dev/null || true)
+if [ -n "$MATCHES" ]; then
+  echo "$MATCHES"
+  fail "agent-orchestrator source references an internal service directly. It must only call \$GRAPHQL_URL."
+fi
+
+section "[17/19] Architecture constraint: frontend source"
+
+MATCHES=$(grep -RIn \
+  --exclude-dir=node_modules --exclude-dir=build --exclude-dir=.gradle \
+  "$INTERNAL_PATTERN" apps/web 2>/dev/null || true)
+if [ -n "$MATCHES" ]; then
+  echo "$MATCHES"
+  fail "frontend source references an internal service directly. It must only call the agent."
+fi
+
+section "[18/19] Apollo absence in active runtime"
 
 APOLLO_PATTERN='@apollo/server\|expressMiddleware\|graphql-gateway\|ApolloServer\|apollo-server'
 MATCHES=$(grep -RIn \
@@ -238,15 +309,12 @@ if [ -n "$MATCHES" ]; then
   fail "Active runtime references Apollo. Move references under prototype-apollo/ or remove."
 fi
 
-section "[13/14] prototype-apollo preserved and ignored"
+section "[19/19] prototype-apollo preserved + skills present"
 
 [ -d prototype-apollo ] || fail "prototype-apollo/ directory missing."
 [ -f prototype-apollo/README.md ] || fail "prototype-apollo/README.md missing."
 grep -qi 'reference only\|archived\|not part of the active demo' prototype-apollo/README.md \
   || fail "prototype-apollo/README.md does not mark itself as reference-only."
-echo "prototype-apollo/ present, marked reference-only, and excluded from active checks."
-
-section "[14/14] Agent skills & architecture guardrails"
 
 [ -f AGENTS.md ] || fail "AGENTS.md missing."
 grep -q 'Viaduct-first\|Ktor-hosted Viaduct' AGENTS.md \
