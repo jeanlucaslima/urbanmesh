@@ -1,6 +1,9 @@
 # urbanmesh-demo
 
-This is the full demo for *Turning San Francisco Into a GraphQL Server*.
+UrbanMesh is a Viaduct-powered civic graph demo over San Francisco.
+
+The demo asks about city blocks, not customers. The graph composes
+location, permits, civic cases, transit, census, and policy domains.
 
 ```
 Browser UI                              GraphiQL / curl
@@ -14,7 +17,7 @@ agent-orchestrator                             │
                     │
                     ▼
              tenant resolvers
-       (customer · billing · support · usage)
+       (location · permits · civic · transit · census)
                     │
                     ▼
         internal services + policy-service
@@ -25,41 +28,26 @@ agent-orchestrator                             │
 
 The active GraphQL server is `viaduct-server`. Both the UI client and the
 agent client go through the same `/graphql` endpoint. The agent does not
-call customer, billing, support, usage, or policy services directly.
+call location, permits, civic, transit, census, or policy services
+directly.
 
 The old Apollo prototype is preserved under `prototype-apollo/` for
 reference only.
 
-## What PRD D proves
+## What the demo proves
 
 The agent is not special.
 
-- It does not call `customer-service`.
-- It does not call `billing-service`.
-- It does not call `support-service`.
-- It does not call `usage-service`.
+- It does not call `location-service`.
+- It does not call `permits-service`.
+- It does not call `civic-service`.
+- It does not call `transit-service`.
+- It does not call `census-service`.
 - It does not call `policy-service`.
 
 It calls **the graph**. Viaduct coordinates services, enforces policy,
 and returns execution metadata. `scripts/verify.sh` grep-fails the
-build if the agent or frontend source ever names an internal service.
-
-## Phase status
-
-| PRD | State    | Adds                                              |
-| --- | -------- | ------------------------------------------------- |
-| A   | done     | Viaduct/Ktor baseline, fixture customer           |
-| B   | done     | customer/billing/support/usage tenant resolvers   |
-| C-skills | done | agent skills + Apollo containment              |
-| C   | done     | role-aware policy + execution metadata            |
-| D   | done     | agent orchestrator + frontend                     |
-| E   | done     | demo polish, presets, runbook                     |
-
-PRD E (demo polish + talk alignment) is complete. PRD F (rehearsal /
-failure-mode QA) is next.
-
-See `PROJECT_STATUS.md` and `docs/prds/PRD_INDEX.md`. For the on-stage
-sequence and fallback ladder, see [`docs/demo-runbook.md`](docs/demo-runbook.md).
+build if the agent or frontend source ever names a city service.
 
 ## Run locally
 
@@ -75,11 +63,12 @@ docker compose up --build -d
 | GraphQL              | http://localhost:8080/graphql      |
 | GraphiQL             | http://localhost:8080/graphiql     |
 | viaduct-server health| http://localhost:8080/health       |
-| customer-service     | http://localhost:5101              |
-| billing-service      | http://localhost:5102              |
-| support-service      | http://localhost:5103              |
-| usage-service        | http://localhost:5104              |
+| location-service     | http://localhost:5101              |
+| permits-service      | http://localhost:5102              |
+| civic-service        | http://localhost:5103              |
+| transit-service      | http://localhost:5104              |
 | policy-service       | http://localhost:5105              |
+| census-service       | http://localhost:5106              |
 | Postgres             | postgres://demo:demo@localhost:5432/demo |
 
 ## Manual demo
@@ -90,43 +79,44 @@ not auto-run, so the presenter stays in control.
 
 Recommended sequence:
 
-1. Click preset **Risk review** (AI_ASSISTANT, C-1027), then
+1. Click preset **Block review** (Public AI Assistant, SF-1027), then
    **Run through Viaduct**. You should see:
    - an answer that mentions which fields were restricted
-   - the GraphQL query the agent issued
-   - `servicesTouched` listing five backing services as chips
-   - `blockedFields` for `Customer.riskLevel`,
-     `BillingAccount.balance`, `BillingAccount.paymentRisk`,
-     `SupportSummary.escalationStatus`
+   - the GraphQL query the agent issued (`UrbanContext`)
+   - `servicesTouched` listing six backing services as chips
+   - `blockedFields` for `CityBlock.planningRisk`,
+     `PermitSummary.estimatedProjectValue`,
+     `PermitSummary.complianceRisk`,
+     `CivicCaseSummary.escalationStatus`
    - matching `policyDecisions` rows with DENY badges and reasons
-2. Click preset **Admin view** (ADMIN, same task), then run again.
-   The answer now shows risk level, balance, payment risk, and
-   escalation status. `blockedFields` reads **No blocked fields**.
-   Decisions become ALLOW.
-3. Optional: **Support situation** / **Billing risk** /
-   **Healthy customer** presets show role and customer variations.
+2. Click preset **Planner view** (City Admin, same task), then run again.
+   The answer now shows planning risk, estimated project value,
+   compliance risk, and civic escalation status. `blockedFields` reads
+   **No blocked fields**. Decisions become ALLOW.
+3. Optional: **Civic cases** / **Permit review** / **Ordinary block**
+   presets show role and block variations.
 
 What to say while you run it:
 
 > The agent is just another GraphQL client. It asks the graph for
-> customer context. The graph calls customer, billing, support,
-> usage, and policy services. Some fields are blocked. Switch the
-> role to ADMIN — same task, same query shape, different policy
-> context. Now the sensitive fields are visible. The agent did not
-> get a side door. It used the graph.
+> urban context around a block. The graph calls location, permits,
+> civic, transit, census, and policy services. Some fields are
+> blocked. Switch the role to City Admin — same task, same query
+> shape, different policy context. Now the sensitive fields are
+> visible. The agent did not get a side door. It used the graph.
 
 GraphiQL remains available at http://localhost:8080/graphiql for the
 same queries.
 
 Full on-stage runbook with fallback paths: [`docs/demo-runbook.md`](docs/demo-runbook.md).
 
-## Demo customers
+## Demo blocks
 
-| ID      | Name             | Status     | Risk   | Billing  | Trend     |
-| ------- | ---------------- | ---------- | ------ | -------- | --------- |
-| C-1001  | Northstar Labs   | HEALTHY    | LOW    | current  | growing   |
-| C-1027  | AcmeCloud        | RISKY      | HIGH   | overdue  | declining |
-| C-2044  | Meridian Finance | RESTRICTED | MEDIUM | current  | flat      |
+| ID      | Name                              | Neighborhood     | Planning status   | Planning risk |
+| ------- | --------------------------------- | ---------------- | ----------------- | ------------- |
+| SF-1001 | Inner Sunset residential block    | Inner Sunset     | Stable            | LOW           |
+| SF-1027 | 16th & Mission                    | Mission District | Elevated review   | HIGH          |
+| SF-2044 | Civic Center sensitive corridor   | Civic Center     | Restricted review | RESTRICTED    |
 
 ## Actor roles
 
@@ -134,13 +124,13 @@ Sensitive fields call `policy-service` before returning data. A denied
 field becomes `null` in `data` and is listed in
 `extensions.executionMetadata.blockedFields`.
 
-| Field                              | AI_ASSISTANT | SUPPORT_AGENT | FINANCE_AGENT | ADMIN |
-| ---------------------------------- | :----------: | :-----------: | :-----------: | :---: |
-| `Customer.riskLevel`               | denied       | allowed       | allowed       | allowed |
-| `BillingAccount.balance`           | denied       | denied        | allowed       | allowed |
-| `BillingAccount.paymentRisk`       | denied       | denied        | allowed       | allowed |
-| `SupportSummary.escalationStatus`  | denied       | allowed       | denied        | allowed |
-| All non-sensitive fields           | allowed      | allowed       | allowed       | allowed |
+| Field                                    | Public AI Assistant | Civic Operator | Permit Analyst | City Admin |
+| ---------------------------------------- | :-----------------: | :------------: | :------------: | :--------: |
+| `CityBlock.planningRisk`                 | denied              | allowed        | allowed        | allowed    |
+| `PermitSummary.estimatedProjectValue`    | denied              | denied         | allowed        | allowed    |
+| `PermitSummary.complianceRisk`           | denied              | denied         | allowed        | allowed    |
+| `CivicCaseSummary.escalationStatus`      | denied              | allowed        | denied         | allowed    |
+| All non-sensitive fields                 | allowed             | allowed        | allowed        | allowed    |
 
 ## Repo layout
 
@@ -154,13 +144,14 @@ urbanmesh-demo/
 │   └── agent-orchestrator/ Express agent, calls Viaduct only
 ├── viaduct-server/         Ktor + Viaduct tenant resolvers
 ├── services/
-│   ├── customer-service/
-│   ├── billing-service/
-│   ├── support-service/
-│   ├── usage-service/
+│   ├── location-service/
+│   ├── permits-service/
+│   ├── civic-service/
+│   ├── transit-service/
+│   ├── census-service/
 │   └── policy-service/
 ├── data/seed.sql
-├── scripts/verify.sh       19-stage PRD D verification
+├── scripts/verify.sh       end-to-end verification
 ├── docker-compose.yml
 ├── prototype-apollo/       archived Apollo prototype (reference only)
 ├── PROJECT_STATUS.md
@@ -173,12 +164,12 @@ urbanmesh-demo/
 ./scripts/verify.sh
 ```
 
-19 stages cover: compose topology, all health endpoints, Postgres seed,
-direct service responses, policy-service, GraphQL across all four roles,
-executionMetadata shape, agent `/run` for AI/ADMIN/missing-customer,
-frontend HTML, the two architecture grep guardrails (agent and frontend
-must not name internal services), Apollo absence, and the
-prototype/skills layout.
+Covers: compose topology, all health endpoints, Postgres seed, direct
+city-service responses, policy-service, GraphQL across all four roles,
+executionMetadata shape, agent `/run` for the public assistant and
+city admin plus missing-block validation, frontend HTML, the two
+architecture grep guardrails (agent and frontend must not name a
+city service), Apollo absence, and the prototype/skills layout.
 
 ## Agent workflow
 
@@ -196,9 +187,11 @@ The UI is a client. The agent is also a client.
 
 Both go through the same Viaduct GraphQL endpoint.
 
-The agent does not call billing.
-The agent does not call support.
-The agent does not call usage.
+The agent does not call location.
+The agent does not call permits.
+The agent does not call civic.
+The agent does not call transit.
+The agent does not call census.
 The agent does not call policy.
 
 It calls the graph.

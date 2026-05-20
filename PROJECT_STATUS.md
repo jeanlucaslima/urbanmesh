@@ -4,34 +4,34 @@
 
 | Field               | Value                                                       |
 | ------------------- | ----------------------------------------------------------- |
-| Last completed PRD  | PRD E (demo polish + talk alignment)                        |
-| Current architecture| Full demo stack: Viaduct + policy + agent + frontend, with the frontend reframed as a demo console |
-| Last verification   | `./scripts/verify.sh` ✅                                     |
-| Known residuals     | manual browser click-through; manual GraphiQL spot-check     |
+| Last completed PRD  | PRD E.5 — Make It UrbanMesh                                 |
+| Current architecture| Full UrbanMesh civic graph: Viaduct + policy + agent + frontend over location / permits / civic / transit / census domains |
+| Last verification   | `./scripts/verify.sh` pending re-run with UrbanMesh checks  |
+| Known residuals     | manual browser click-through; manual GraphiQL spot-check; no real SF open-data ingestion |
 | Next PRD            | PRD F — Rehearsal / Failure-Mode QA                         |
 
 ## What works today
 
-`docker compose up --build -d` starts nine active services:
-`postgres`, `customer-service`, `billing-service`, `support-service`,
-`usage-service`, `policy-service`, `viaduct-server`,
+`docker compose up --build -d` starts ten active services:
+`postgres`, `location-service`, `permits-service`, `civic-service`,
+`transit-service`, `census-service`, `policy-service`, `viaduct-server`,
 `agent-orchestrator`, `frontend`.
 
 Demo-ready surface:
 
 - Frontend at http://localhost:3000 with header
-  *"Viaduct Agent Demo — The agent is just another GraphQL client."*
-- Five presets above the task input: **Risk review**, **Admin view**,
-  **Support situation**, **Billing risk**, **Healthy customer**.
-  Presets set task + role but do not auto-run.
+  *"UrbanMesh — Turning San Francisco into a GraphQL server."*
+- Five presets above the task input: **Block review**, **Planner view**,
+  **Civic cases**, **Permit review**, **Ordinary block**. Presets set
+  task + role but do not auto-run.
 - Run button labeled **"Run through Viaduct"**.
 - Evidence panel sits next to the Answer panel and shows: a one-line
   count summary, services-touched chips, a sorted `blockedFields`
-  list (with **"No blocked fields"** empty state for ADMIN), and
+  list (with **"No blocked fields"** empty state for City Admin), and
   per-decision ALLOW/DENY rows with badges (`✓ ALLOW` / `✗ DENY`).
 - Architecture proof line at the top of the evidence panel and again
   in the footer.
-- Role-contrast helper line after each run: ADMIN gets *"received
+- Role-contrast helper line after each run: City Admin gets *"received
   the full sensitive context"*, others get *"received a
   policy-filtered view"*.
 
@@ -41,13 +41,16 @@ keys are always present: `answer`, `query`, `variables`, `data`,
 errors set `executionMetadata: null` so observers can tell the agent
 never touched Viaduct.
 
-Customer ID extraction is case-insensitive (`c-1027` → `C-1027`) and
-rejects tasks that name more than one ID (`multiple_customer_ids`).
+Block ID extraction is case-insensitive (`sf-1027` → `SF-1027`),
+resolves common place aliases (16th & Mission, Inner Sunset, Civic
+Center), and rejects tasks that name more than one block
+(`multiple_block_ids`).
 
 ## Architecture constraints enforced by `scripts/verify.sh`
 
-- agent and frontend may not reference any internal service name in
-  source.
+- agent and frontend may not reference any city service name
+  (`location-service`, `permits-service`, `civic-service`,
+  `transit-service`, `census-service`, `policy-service`) in source.
 - active runtime may not reference Apollo tokens outside
   `prototype-apollo/`.
 - `prototype-apollo/` must be present and marked reference-only.
@@ -61,6 +64,9 @@ Reference only; not part of the active demo.
 ## What is not built yet
 
 - No LLM API calls. The agent is deterministic.
+- No real SF open-data ingestion. Block / permit / civic / transit /
+  census data is fixture data only.
+- No maps in the UI.
 - No authentication.
 - No persistence of agent runs.
 - No streaming responses.

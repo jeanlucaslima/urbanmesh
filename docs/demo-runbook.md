@@ -6,7 +6,7 @@
 
 ```bash
 docker compose up --build -d
-./scripts/verify.sh    # must pass 19/19
+./scripts/verify.sh
 ```
 
 Open three tabs in advance:
@@ -19,49 +19,52 @@ Run a quick warmup so JIT and caches are hot:
 
 ```bash
 curl -s -X POST http://localhost:5005/run -H 'Content-Type: application/json' \
-  -d '{"task":"Explain customer C-1027 risk","actorRole":"AI_ASSISTANT"}' >/dev/null
+  -d '{"task":"Explain what is happening around 16th & Mission","actorRole":"PUBLIC_AI_ASSISTANT"}' >/dev/null
 ```
 
 ## Primary demo path — frontend
 
 The console is the primary surface. Click presets, don't type.
 
-### Run 1 — AI_ASSISTANT (the policy-filtered view)
+### Run 1 — Public AI Assistant (the policy-filtered view)
 
-1. Click preset **Risk review** (AI_ASSISTANT, C-1027).
+1. Click preset **Block review** (Public AI Assistant, 16th & Mission).
 2. Click **Run through Viaduct**.
 3. Narrate:
-   > The agent asks the graph for customer context. The graph calls
-   > customer, billing, support, usage, and policy services.
+   > The agent asks the graph for urban context around this block. The
+   > graph calls location, permits, civic, transit, census, and policy
+   > services.
 4. Point at:
-   - the **answer**: notice the "Some sensitive fields were restricted" block
-   - **services coordinated by the graph**: 5 chips
-   - **blocked fields**: four fields (`Customer.riskLevel`,
-     `BillingAccount.balance`, `BillingAccount.paymentRisk`,
-     `SupportSummary.escalationStatus`)
+   - the **answer**: notice the "Some sensitive planning fields were restricted" block
+   - **services coordinated by the graph**: six chips
+   - **blocked fields**: four fields (`CityBlock.planningRisk`,
+     `PermitSummary.estimatedProjectValue`,
+     `PermitSummary.complianceRisk`,
+     `CivicCaseSummary.escalationStatus`)
    - **policy decisions**: four DENY rows with human reasons
 
-### Run 2 — ADMIN (the same question, different policy context)
+### Run 2 — City Admin (the same question, different policy context)
 
-1. Click preset **Admin view** (ADMIN, same task).
+1. Click preset **Planner view** (City Admin, same task).
 2. Click **Run through Viaduct**.
 3. Narrate:
    > Same task. Same query shape. Different policy context. Now the
-   > sensitive fields are visible. The agent did not get a side door —
-   > it used the graph.
+   > sensitive planning fields are visible. The agent did not get a
+   > side door — it used the graph.
 4. Point at:
-   - **risk level, balance, payment risk, escalation status** in the
-     answer
+   - **planning risk, estimated project value, compliance risk,
+     civic escalation status** in the answer
    - **blocked fields: No blocked fields**
-   - **policy decisions**: four ALLOW rows
+   - **policy decisions**: ALLOW rows
 
-### Optional run 3 — SUPPORT_AGENT or FINANCE_AGENT
+### Optional run 3 — Civic Operator or Permit Analyst
 
 If you have time and want to show role granularity:
 
-- **Support situation** preset → support escalation visible,
-  billing balance/payment risk blocked
-- **Billing risk** preset → billing visible, support escalation blocked
+- **Civic cases** preset → civic escalation status visible,
+  permit estimated project value and compliance risk blocked
+- **Permit review** preset → permit fields visible, civic escalation
+  status blocked
 
 The talk does not require these. They reinforce that policy is per
 *role*, not per *request*.
@@ -71,9 +74,9 @@ The talk does not require these. They reinforce that policy is per
 The architecture-proof box at the top of the evidence panel and the
 footer both restate the demo claim. Use it as your closing line:
 
-> The agent only calls `/graphql`. Internal services are reached
-> through Viaduct tenant resolvers. No direct calls to customer,
-> billing, support, usage, or policy services.
+> The agent only calls `/graphql`. City services are reached
+> through Viaduct tenant resolvers. No direct calls to location,
+> permits, civic, transit, census, or policy services.
 
 ## Fallback ladder
 
@@ -85,14 +88,14 @@ on stage.
 Use curl against the agent. Open the terminal tab.
 
 ```bash
-# AI_ASSISTANT
+# Public AI Assistant
 curl -s -X POST http://localhost:5005/run -H 'Content-Type: application/json' \
-  -d '{"task":"Explain customer C-1027 risk","actorRole":"AI_ASSISTANT"}' \
+  -d '{"task":"Explain what is happening around 16th & Mission","actorRole":"PUBLIC_AI_ASSISTANT"}' \
   | jq
 
-# ADMIN
+# City Admin
 curl -s -X POST http://localhost:5005/run -H 'Content-Type: application/json' \
-  -d '{"task":"Explain customer C-1027 risk","actorRole":"ADMIN"}' \
+  -d '{"task":"Explain what is happening around 16th & Mission","actorRole":"CITY_ADMIN"}' \
   | jq
 ```
 
@@ -106,12 +109,14 @@ Use GraphiQL directly against Viaduct. Open the GraphiQL tab.
 Paste:
 
 ```graphql
-query CustomerContext($id: ID!, $actorRole: ActorRole!) {
-  customer(id: $id, actorRole: $actorRole) {
-    id name status riskLevel
-    billing { balance overdueInvoices paymentRisk }
-    support { openTickets latestIssue escalationStatus }
-    usage   { activeUsers monthlyEvents usageTrend }
+query UrbanContext($id: ID!, $actorRole: ActorRole!) {
+  block(id: $id, actorRole: $actorRole) {
+    id name neighborhood planningStatus planningRisk
+    zoning  { district allowedUses heightLimit specialUseDistrict }
+    permits { activePermits recentPermits estimatedProjectValue complianceRisk }
+    civic   { openCases latestIssue escalationStatus }
+    transit { nearbyStops accessScore ridershipTrend }
+    census  { population medianIncome housingDensity }
   }
 }
 ```
@@ -119,7 +124,7 @@ query CustomerContext($id: ID!, $actorRole: ActorRole!) {
 Variables:
 
 ```json
-{ "id": "C-1027", "actorRole": "AI_ASSISTANT" }
+{ "id": "SF-1027", "actorRole": "PUBLIC_AI_ASSISTANT" }
 ```
 
 GraphiQL shows the same `extensions.executionMetadata` block. The point
@@ -127,9 +132,8 @@ still lands: the graph enforced policy and returned evidence.
 
 ### Rung 3 — GraphiQL fails
 
-Read the canonical AI_ASSISTANT and ADMIN responses straight out of
-the root `README.md` ("Sample query — AI_ASSISTANT" section). They
-match what the live system produces.
+Read the canonical Public AI Assistant and City Admin responses straight
+out of the root `README.md`. They match what the live system produces.
 
 ### Rung 4 — Docker itself fails
 
@@ -140,22 +144,22 @@ slide deck still anchors the claim.
 
 ```bash
 # Stack health (should all return ok)
-for p in 8080 5101 5102 5103 5104 5105 5005; do
+for p in 8080 5101 5102 5103 5104 5105 5106 5005; do
   curl -s http://localhost:$p/health
 done
 curl -s -o /dev/null -w "frontend HTTP %{http_code}\n" http://localhost:3000
 
-# Direct Viaduct as AI_ASSISTANT (should null sensitive fields)
+# Direct Viaduct as Public AI Assistant (should null sensitive fields)
 curl -s -X POST http://localhost:8080/graphql -H 'Content-Type: application/json' \
-  -d '{"query":"query { customer(id: \"C-1027\", actorRole: AI_ASSISTANT) { id name riskLevel billing { balance paymentRisk } support { escalationStatus } } }"}' \
+  -d '{"query":"query { block(id: \"SF-1027\", actorRole: PUBLIC_AI_ASSISTANT) { id name planningRisk permits { estimatedProjectValue complianceRisk } civic { escalationStatus } } }"}' \
   | jq
 
-# Same query as ADMIN
+# Same query as City Admin
 curl -s -X POST http://localhost:8080/graphql -H 'Content-Type: application/json' \
-  -d '{"query":"query { customer(id: \"C-1027\", actorRole: ADMIN) { id name riskLevel billing { balance paymentRisk } support { escalationStatus } } }"}' \
+  -d '{"query":"query { block(id: \"SF-1027\", actorRole: CITY_ADMIN) { id name planningRisk permits { estimatedProjectValue complianceRisk } civic { escalationStatus } } }"}' \
   | jq
 
-# Re-run full verification (19 stages)
+# Re-run full verification
 ./scripts/verify.sh
 
 # Tear everything down
