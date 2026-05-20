@@ -56,9 +56,10 @@ object InternalClient {
 }
 
 object ServiceUrls {
-    val customer: String = System.getenv("CUSTOMER_SERVICE_URL") ?: "http://customer-service:5101"
-    val billing: String = System.getenv("BILLING_SERVICE_URL") ?: "http://billing-service:5102"
-    val support: String = System.getenv("SUPPORT_SERVICE_URL") ?: "http://support-service:5103"
-    val usage: String = System.getenv("USAGE_SERVICE_URL") ?: "http://usage-service:5104"
+    val location: String = System.getenv("LOCATION_SERVICE_URL") ?: "http://location-service:5101"
+    val permits: String = System.getenv("PERMITS_SERVICE_URL") ?: "http://permits-service:5102"
+    val civic: String = System.getenv("CIVIC_SERVICE_URL") ?: "http://civic-service:5103"
+    val transit: String = System.getenv("TRANSIT_SERVICE_URL") ?: "http://transit-service:5104"
+    val census: String = System.getenv("CENSUS_SERVICE_URL") ?: "http://census-service:5106"
     val policy: String = System.getenv("POLICY_SERVICE_URL") ?: "http://policy-service:5105"
 }

@@ -1,40 +1,57 @@
 extend type Query {
   greeting: String @resolver
-  customer(id: ID!, actorRole: ActorRole!): Customer @resolver
+  block(id: ID!, actorRole: ActorRole!): CityBlock @resolver
 }
 
 enum ActorRole {
-  AI_ASSISTANT
-  SUPPORT_AGENT
-  FINANCE_AGENT
-  ADMIN
+  PUBLIC_AI_ASSISTANT
+  CIVIC_OPERATOR
+  PERMIT_ANALYST
+  CITY_ADMIN
 }
 
-type Customer {
+type CityBlock {
   id: ID!
   name: String
-  status: String
-  riskLevel: String
+  neighborhood: String
+  planningStatus: String
+  planningRisk: String
 
-  billing: BillingAccount @resolver
-  support: SupportSummary @resolver
-  usage: UsageSummary @resolver
+  zoning: ZoningInfo @resolver
+  permits: PermitSummary @resolver
+  civic: CivicCaseSummary @resolver
+  transit: TransitSummary @resolver
+  census: CensusProfile @resolver
 }
 
-type BillingAccount {
-  balance: Float
-  overdueInvoices: Int
-  paymentRisk: String
+type ZoningInfo {
+  district: String
+  allowedUses: String
+  heightLimit: String
+  specialUseDistrict: String
 }
 
-type SupportSummary {
-  openTickets: Int
+type PermitSummary {
+  activePermits: Int
+  recentPermits: Int
+  estimatedProjectValue: Float
+  complianceRisk: String
+}
+
+type CivicCaseSummary {
+  openCases: Int
   latestIssue: String
   escalationStatus: String
 }
 
-type UsageSummary {
-  activeUsers: Int
-  monthlyEvents: Int
-  usageTrend: String
+type TransitSummary {
+  nearbyStops: Int
+  accessScore: Int
+  ridershipTrend: String
+}
+
+type CensusProfile {
+  population: Int
+  medianIncome: Int
+  housingDensity: String
 }

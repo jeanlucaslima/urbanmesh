@@ -21,7 +21,7 @@ data class PolicyDecisionRecord(
  */
 class RequestState {
     @Volatile
-    var actorRole: String = "AI_ASSISTANT"
+    var actorRole: String = "PUBLIC_AI_ASSISTANT"
 
     private val services: MutableSet<String> =
         Collections.newSetFromMap(ConcurrentHashMap())

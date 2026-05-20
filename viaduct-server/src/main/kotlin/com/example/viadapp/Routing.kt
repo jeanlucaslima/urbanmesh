@@ -27,12 +27,40 @@ import viaduct.service.wiring.graphiql.graphiQLHtml
 private val viaductGraphiQLConfig = GraphiQLHtmlConfig(
     title = "GraphiQL - viaduct-server",
     defaultQuery = """
-        query Baseline {
-          greeting
-          customer(id: "C-1027") {
+        query UrbanContext {
+          block(id: "SF-1027", actorRole: PUBLIC_AI_ASSISTANT) {
             id
             name
-            status
+            neighborhood
+            planningStatus
+            planningRisk
+            zoning {
+              district
+              allowedUses
+              heightLimit
+              specialUseDistrict
+            }
+            permits {
+              activePermits
+              recentPermits
+              estimatedProjectValue
+              complianceRisk
+            }
+            civic {
+              openCases
+              latestIssue
+              escalationStatus
+            }
+            transit {
+              nearbyStops
+              accessScore
+              ridershipTrend
+            }
+            census {
+              population
+              medianIncome
+              housingDensity
+            }
           }
         }
     """.trimIndent(),
