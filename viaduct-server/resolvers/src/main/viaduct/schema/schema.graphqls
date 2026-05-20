@@ -11,6 +11,7 @@ type Customer {
 
   billing: BillingAccount @resolver
   support: SupportSummary @resolver
+  usage: UsageSummary @resolver
 }
 
 type BillingAccount {
@@ -23,4 +24,10 @@ type SupportSummary {
   openTickets: Int
   latestIssue: String
   escalationStatus: String
+}
+
+type UsageSummary {
+  activeUsers: Int
+  monthlyEvents: Int
+  usageTrend: String
 }
