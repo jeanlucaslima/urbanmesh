@@ -43,7 +43,7 @@ function emptyResponse(): RunResponse {
 app.post("/run", async (req, res) => {
   try {
     const planned = plan(req.body?.task, req.body?.actorRole);
-    const envelope = await runGraphQL<{ customer: any }>(
+    const envelope = await runGraphQL<{ block: any }>(
       planned.query,
       planned.variables
     );
@@ -58,7 +58,7 @@ app.post("/run", async (req, res) => {
       return res.status(502).json(body);
     }
 
-    const customer = envelope.data?.customer ?? null;
+    const block = envelope.data?.block ?? null;
     const metadata =
       (envelope.extensions?.executionMetadata as any) ?? {
         servicesTouched: [],
@@ -66,7 +66,7 @@ app.post("/run", async (req, res) => {
         policyDecisions: [],
       };
 
-    const answer = buildAnswer(customer, planned.actorRole, metadata);
+    const answer = buildAnswer(block, planned.actorRole, metadata);
     const body: RunResponse = {
       answer,
       query: planned.query,

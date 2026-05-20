@@ -1,24 +1,37 @@
 import { ActorRole } from "./planner.js";
 
-interface Customer {
+interface CityBlock {
   id: string;
   name?: string | null;
-  status?: string | null;
-  riskLevel?: string | null;
-  billing?: {
-    balance?: number | null;
-    overdueInvoices?: number | null;
-    paymentRisk?: string | null;
+  neighborhood?: string | null;
+  planningStatus?: string | null;
+  planningRisk?: string | null;
+  zoning?: {
+    district?: string | null;
+    allowedUses?: string | null;
+    heightLimit?: string | null;
+    specialUseDistrict?: string | null;
   } | null;
-  support?: {
-    openTickets?: number | null;
+  permits?: {
+    activePermits?: number | null;
+    recentPermits?: number | null;
+    estimatedProjectValue?: number | null;
+    complianceRisk?: string | null;
+  } | null;
+  civic?: {
+    openCases?: number | null;
     latestIssue?: string | null;
     escalationStatus?: string | null;
   } | null;
-  usage?: {
-    activeUsers?: number | null;
-    monthlyEvents?: number | null;
-    usageTrend?: string | null;
+  transit?: {
+    nearbyStops?: number | null;
+    accessScore?: number | null;
+    ridershipTrend?: string | null;
+  } | null;
+  census?: {
+    population?: number | null;
+    medianIncome?: number | null;
+    housingDensity?: string | null;
   } | null;
 }
 
@@ -33,6 +46,13 @@ interface ExecutionMetadata {
   }>;
 }
 
+const ROLE_LABEL: Record<ActorRole, string> = {
+  PUBLIC_AI_ASSISTANT: "Public AI Assistant",
+  CIVIC_OPERATOR: "Civic Operator",
+  PERMIT_ANALYST: "Permit Analyst",
+  CITY_ADMIN: "City Admin",
+};
+
 function fmtMoney(n: number | null | undefined): string | null {
   if (n === null || n === undefined) return null;
   return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
@@ -44,39 +64,53 @@ function bulletIfPresent(label: string, value: unknown): string | null {
 }
 
 export function buildAnswer(
-  customer: Customer | null | undefined,
+  block: CityBlock | null | undefined,
   actorRole: ActorRole,
   metadata: ExecutionMetadata
 ): string {
-  if (!customer) {
-    return `No customer found for the given ID.`;
+  const roleLabel = ROLE_LABEL[actorRole];
+
+  if (!block) {
+    return `UrbanMesh found no block for the given ID.`;
   }
 
   const lines: string[] = [];
-  lines.push(
-    `Customer ${customer.id} is ${customer.name ?? "(name hidden)"}.`
-  );
+  const heading = block.name
+    ? `${block.id}: ${block.name}${block.neighborhood ? ` in the ${block.neighborhood}` : ""}`
+    : block.id;
+  lines.push(`UrbanMesh found context for ${heading}.`);
   lines.push("");
 
-  const isAdmin = actorRole === "ADMIN";
+  const isAdmin = actorRole === "CITY_ADMIN";
   lines.push(
     isAdmin
-      ? `ADMIN can see the full customer context:`
-      : `Visible context for ${actorRole}:`
+      ? `${roleLabel} received the full planning context:`
+      : `Visible context for ${roleLabel}:`
   );
 
   const ctxBullets: (string | null)[] = [
-    bulletIfPresent("Status", customer.status),
-    bulletIfPresent("Risk level", customer.riskLevel),
-    bulletIfPresent("Billing balance", fmtMoney(customer.billing?.balance)),
-    bulletIfPresent("Billing overdue invoices", customer.billing?.overdueInvoices),
-    bulletIfPresent("Billing payment risk", customer.billing?.paymentRisk),
-    bulletIfPresent("Support open tickets", customer.support?.openTickets),
-    bulletIfPresent("Support latest issue", customer.support?.latestIssue),
-    bulletIfPresent("Support escalation status", customer.support?.escalationStatus),
-    bulletIfPresent("Usage active users", customer.usage?.activeUsers),
-    bulletIfPresent("Usage monthly events", customer.usage?.monthlyEvents),
-    bulletIfPresent("Usage trend", customer.usage?.usageTrend),
+    bulletIfPresent("Planning status", block.planningStatus),
+    bulletIfPresent("Planning risk", block.planningRisk),
+    bulletIfPresent("Zoning district", block.zoning?.district),
+    bulletIfPresent("Allowed uses", block.zoning?.allowedUses),
+    bulletIfPresent("Height limit", block.zoning?.heightLimit),
+    bulletIfPresent("Special use district", block.zoning?.specialUseDistrict),
+    bulletIfPresent("Active permits", block.permits?.activePermits),
+    bulletIfPresent("Recent permits", block.permits?.recentPermits),
+    bulletIfPresent(
+      "Estimated project value",
+      fmtMoney(block.permits?.estimatedProjectValue)
+    ),
+    bulletIfPresent("Permit compliance risk", block.permits?.complianceRisk),
+    bulletIfPresent("Open civic cases", block.civic?.openCases),
+    bulletIfPresent("Latest civic issue", block.civic?.latestIssue),
+    bulletIfPresent("Civic escalation status", block.civic?.escalationStatus),
+    bulletIfPresent("Transit nearby stops", block.transit?.nearbyStops),
+    bulletIfPresent("Transit access score", block.transit?.accessScore),
+    bulletIfPresent("Ridership trend", block.transit?.ridershipTrend),
+    bulletIfPresent("Population", block.census?.population),
+    bulletIfPresent("Median income", block.census?.medianIncome),
+    bulletIfPresent("Housing density", block.census?.housingDensity),
   ];
   for (const b of ctxBullets) if (b) lines.push(b);
 
@@ -85,14 +119,13 @@ export function buildAnswer(
   if (blocked.length === 0) {
     lines.push(`No fields were blocked.`);
   } else {
-    lines.push(`Some sensitive fields were restricted for ${actorRole}:`);
+    lines.push(`Some sensitive planning fields were restricted for ${roleLabel}:`);
     for (const f of blocked) lines.push(`- ${f}`);
   }
 
   lines.push("");
   lines.push(
-    `The agent did not call internal systems directly. It used the Viaduct graph, ` +
-      `which enforced policy and returned execution metadata.`
+    `The agent used the Viaduct graph. It did not call city services directly.`
   );
 
   return lines.join("\n");

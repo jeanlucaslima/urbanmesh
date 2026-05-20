@@ -2,13 +2,20 @@ import { useState } from "react";
 import { runAgent, ActorRole, AgentRunResponse } from "./api";
 
 const ROLES: ActorRole[] = [
-  "AI_ASSISTANT",
-  "SUPPORT_AGENT",
-  "FINANCE_AGENT",
-  "ADMIN",
+  "PUBLIC_AI_ASSISTANT",
+  "CIVIC_OPERATOR",
+  "PERMIT_ANALYST",
+  "CITY_ADMIN",
 ];
 
-const DEFAULT_TASK = "Explain customer C-1027 risk";
+const ROLE_LABEL: Record<ActorRole, string> = {
+  PUBLIC_AI_ASSISTANT: "Public AI Assistant",
+  CIVIC_OPERATOR: "Civic Operator",
+  PERMIT_ANALYST: "Permit Analyst",
+  CITY_ADMIN: "City Admin",
+};
+
+const DEFAULT_TASK = "Explain what is happening around 16th & Mission";
 
 interface Preset {
   label: string;
@@ -17,16 +24,16 @@ interface Preset {
 }
 
 const PRESETS: Preset[] = [
-  { label: "Risk review",       task: "Explain customer C-1027 risk",              role: "AI_ASSISTANT"  },
-  { label: "Admin view",        task: "Explain customer C-1027 risk",              role: "ADMIN"         },
-  { label: "Support situation", task: "Explain customer C-1027 support situation", role: "SUPPORT_AGENT" },
-  { label: "Billing risk",      task: "Explain customer C-1027 billing risk",      role: "FINANCE_AGENT" },
-  { label: "Healthy customer",  task: "Explain customer C-1001 risk",              role: "AI_ASSISTANT"  },
+  { label: "Block review",   task: "Explain what is happening around 16th & Mission",            role: "PUBLIC_AI_ASSISTANT" },
+  { label: "Planner view",   task: "Explain what is happening around 16th & Mission",            role: "CITY_ADMIN"          },
+  { label: "Civic cases",    task: "Summarize civic cases around 16th & Mission",                role: "CIVIC_OPERATOR"      },
+  { label: "Permit review",  task: "Review permit activity around 16th & Mission",               role: "PERMIT_ANALYST"      },
+  { label: "Ordinary block", task: "Explain what is happening around Inner Sunset residential block", role: "PUBLIC_AI_ASSISTANT" },
 ];
 
 export default function App() {
   const [task, setTask] = useState(DEFAULT_TASK);
-  const [actorRole, setActorRole] = useState<ActorRole>("AI_ASSISTANT");
+  const [actorRole, setActorRole] = useState<ActorRole>("PUBLIC_AI_ASSISTANT");
   const [result, setResult] = useState<AgentRunResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,7 +64,7 @@ export default function App() {
   }
 
   const roleNote = result
-    ? actorRole === "ADMIN"
+    ? actorRole === "CITY_ADMIN"
       ? "This role received the full sensitive context."
       : "This role received a policy-filtered view."
     : null;
@@ -65,10 +72,10 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>Viaduct Agent Demo</h1>
-        <p className="subtitle">The agent is just another GraphQL client.</p>
+        <h1>UrbanMesh</h1>
+        <p className="subtitle">Turning San Francisco into a GraphQL server.</p>
         <p className="tagline">
-          One endpoint. Many services. Policy-aware execution.
+          One city question. Many civic domains. One Viaduct graph.
         </p>
       </header>
 
@@ -94,7 +101,7 @@ export default function App() {
           value={task}
           onChange={(e) => setTask(e.target.value)}
           rows={2}
-          placeholder="Explain customer C-1027 risk"
+          placeholder="Explain what is happening around 16th & Mission"
         />
         <div className="controls-row">
           <label className="role-label">
@@ -104,7 +111,7 @@ export default function App() {
               onChange={(e) => setActorRole(e.target.value as ActorRole)}
             >
               {ROLES.map((r) => (
-                <option key={r} value={r}>{r}</option>
+                <option key={r} value={r}>{ROLE_LABEL[r]}</option>
               ))}
             </select>
           </label>
@@ -132,7 +139,7 @@ export default function App() {
           <h2>Execution Evidence</h2>
           <p className="proof">
             The agent only calls <code>/graphql</code>. No direct calls to
-            customer, billing, support, usage, or policy services.
+            location, permits, civic, transit, census, or policy services.
           </p>
 
           {result?.executionMetadata && (
@@ -231,7 +238,7 @@ export default function App() {
 
       <footer>
         <strong>Architecture proof:</strong> the agent only calls{" "}
-        <code>/graphql</code>. Internal services are reached through Viaduct
+        <code>/graphql</code>. City services are reached through Viaduct
         tenant resolvers.
       </footer>
     </div>

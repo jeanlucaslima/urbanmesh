@@ -2,10 +2,10 @@ const AGENT_URL =
   (import.meta as any).env?.VITE_AGENT_URL || "http://localhost:5005";
 
 export type ActorRole =
-  | "AI_ASSISTANT"
-  | "SUPPORT_AGENT"
-  | "FINANCE_AGENT"
-  | "ADMIN";
+  | "PUBLIC_AI_ASSISTANT"
+  | "CIVIC_OPERATOR"
+  | "PERMIT_ANALYST"
+  | "CITY_ADMIN";
 
 export interface PolicyDecision {
   field: string;
@@ -25,10 +25,6 @@ export interface ValidationError {
   message: string;
 }
 
-// Stable envelope returned by the agent for both success and error paths.
-// Success: validationError and graphQLErrors are null; the rest are filled.
-// Validation error: only validationError is non-null.
-// Graph error: graphQLErrors and the planned query/variables are filled.
 export interface AgentRunResponse {
   answer: string | null;
   query: string | null;
@@ -48,7 +44,6 @@ export async function runAgent(
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ task, actorRole }),
   });
-  // The envelope shape is stable across HTTP statuses; parse it either way.
   const body = (await res.json()) as AgentRunResponse;
   if (!res.ok && !body.validationError && !body.graphQLErrors) {
     throw new Error(`agent returned HTTP ${res.status}`);
