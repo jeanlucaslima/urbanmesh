@@ -3,8 +3,41 @@
 This is the Viaduct-first demo foundation for *Turning San Francisco Into a
 GraphQL Server*.
 
-The active GraphQL server is a Ktor-hosted Viaduct service.
-The old Apollo prototype is preserved under `prototype-apollo/` for reference only.
+The active demo runs a Ktor-hosted Viaduct server whose tenant resolvers
+call internal customer, billing, support, and usage services. The old
+Apollo prototype is preserved under `prototype-apollo/` for reference only.
+
+## Architecture
+
+```
+GraphiQL / curl
+        │
+        ▼
+   /graphql  (Ktor)
+        │
+        ▼
+   Viaduct runtime
+        │
+        ▼
+  tenant resolvers
+   (customer, billing,
+    support, usage)
+        │
+        ▼
+  internal services
+   ┌────────────────┐
+   │ customer-svc   │
+   │ billing-svc    │
+   │ support-svc    │
+   │ usage-svc      │
+   └────────────────┘
+        │
+        ▼
+     Postgres
+```
+
+Only the viaduct-server calls the internal services. There is no agent
+or frontend in the active scope yet (PRDs C and D).
 
 ## Starter provenance
 
@@ -19,94 +52,118 @@ urbanmesh-demo/
 ├── viaduct-server/         active Viaduct/Ktor app
 │   ├── build.gradle.kts
 │   ├── settings.gradle.kts
-│   ├── src/main/kotlin/com/example/viadapp/   Ktor host
-│   └── resolvers/                              tenant module (schema + resolvers)
-├── scripts/
-│   └── verify.sh           verification for PRD A baseline
-├── docker-compose.yml      runs viaduct-server
+│   ├── src/main/kotlin/com/example/viadapp/   Ktor host (routing, /health)
+│   └── resolvers/                              tenant module
+│       └── src/main/kotlin/com/example/viadapp/resolvers/
+│           ├── customer/   Query.customer + Customer fields
+│           ├── billing/    Customer.billing → BillingAccount
+│           ├── support/    Customer.support → SupportSummary
+│           ├── usage/      Customer.usage   → UsageSummary
+│           └── internal/   shared HTTP client + service URLs
+├── services/
+│   ├── customer-service/   /customers/:id          (Express + pg)
+│   ├── billing-service/    /billing/:customerId
+│   ├── support-service/    /support/customers/:customerId/tickets
+│   └── usage-service/      /usage/customers/:customerId
+├── data/seed.sql           three demo customers (C-1001, C-1027, C-2044)
+├── scripts/verify.sh       11-stage PRD B verification
+├── docker-compose.yml
 ├── prototype-apollo/       archived Apollo prototype (reference only)
 └── README.md
 ```
 
 ## Run locally
 
-With Docker:
-
-```bash
-docker compose up --build -d
-```
-
-Or with Gradle directly (requires JDK 21):
-
-```bash
-cd viaduct-server
-./gradlew run
-```
-
-## Manual checks
-
-Open GraphiQL:
-
-```
-http://localhost:8080/graphiql
-```
-
-Example query:
-
-```graphql
-query {
-  greeting
-  customer(id: "C-1027") {
-    id
-    name
-    status
-  }
-}
-```
-
-Health endpoint:
-
-```bash
-curl http://localhost:8080/health
-# {"ok":true,"service":"viaduct-server"}
-```
-
-## Customer fixtures
-
-PRD A is fixture-backed; no internal service calls yet.
-
-| ID      | Name                       | Status     |
-| ------- | -------------------------- | ---------- |
-| C-1001  | Northstar Labs             | HEALTHY    |
-| C-1027  | Mission Market Collective  | RISKY      |
-| C-2044  | Meridian Finance           | RESTRICTED |
-
-Unknown IDs return `null`.
-
-## Verify
-
 ```bash
 docker compose up --build -d
 ./scripts/verify.sh
 ```
 
-The verify script checks:
+| Surface              | URL                                |
+| -------------------- | ---------------------------------- |
+| GraphQL              | http://localhost:8080/graphql      |
+| GraphiQL             | http://localhost:8080/graphiql     |
+| viaduct-server health| http://localhost:8080/health       |
+| customer-service     | http://localhost:5101              |
+| billing-service      | http://localhost:5102              |
+| support-service      | http://localhost:5103              |
+| usage-service        | http://localhost:5104              |
+| Postgres             | postgres://demo:demo@localhost:5432/demo |
 
-- viaduct-server container is up
-- `/health` returns `{ok:true, service:"viaduct-server"}`
-- `/graphql` greeting query returns `Hello, World!`
-- `/graphql` customer(id: "C-1027") returns the RISKY fixture
-- `/graphiql` returns HTML
-- root active runtime contains no Apollo references
-- prototype-apollo/ is excluded from verification
+## Demo customers
 
-## Scope of PRD A (and what is intentionally missing)
+| ID      | Name             | Status     | Risk   | Billing  | Trend     |
+| ------- | ---------------- | ---------- | ------ | -------- | --------- |
+| C-1001  | Northstar Labs   | HEALTHY    | LOW    | current  | growing   |
+| C-1027  | AcmeCloud        | RISKY      | HIGH   | overdue  | declining |
+| C-2044  | Meridian Finance | RESTRICTED | MEDIUM | current  | flat      |
 
-Not in this PRD: internal-service integration (customer / billing / support
-/ usage), the policy engine, the agent orchestrator, the frontend, execution
-metadata (services touched, blocked fields, policy decisions), role-based
-access, and Postgres seed data. Those land in PRDs B, C, and D.
+Unknown customer IDs resolve to `null` from `customer-service`'s 404,
+and the resolver returns `null` to GraphQL.
 
-## Prototype
+## Sample full query
 
-See `prototype-apollo/README.md`. The prototype is not part of the active demo.
+Open GraphiQL at http://localhost:8080/graphiql and run:
+
+```graphql
+query CustomerContext {
+  customer(id: "C-1027") {
+    id
+    name
+    status
+    riskLevel
+    billing {
+      balance
+      overdueInvoices
+      paymentRisk
+    }
+    support {
+      openTickets
+      latestIssue
+      escalationStatus
+    }
+    usage {
+      activeUsers
+      monthlyEvents
+      usageTrend
+    }
+  }
+}
+```
+
+Expected (abridged):
+
+```json
+{
+  "customer": {
+    "id": "C-1027",
+    "name": "AcmeCloud",
+    "status": "RISKY",
+    "riskLevel": "HIGH",
+    "billing":  { "balance": 48250.0, "overdueInvoices": 3, "paymentRisk": "HIGH" },
+    "support":  { "openTickets": 3, "latestIssue": "API 5xx errors during peak hours",
+                  "escalationStatus": "ESCALATED" },
+    "usage":    { "activeUsers": 38, "monthlyEvents": 210000, "usageTrend": "declining" }
+  }
+}
+```
+
+Each subgraph is owned by a different tenant resolver but the client
+sees one composed response.
+
+## Verify
+
+```bash
+./scripts/verify.sh
+```
+
+11 stages check: compose services up, all healths, Postgres seed,
+direct service responses, all GraphQL composition queries, and the
+Apollo-absence + prototype-preserved guardrails.
+
+## Out of scope (deferred to later PRDs)
+
+- the policy engine and role-based access control
+- execution metadata (services touched, blocked fields, policy decisions)
+- the agent orchestrator
+- the frontend
