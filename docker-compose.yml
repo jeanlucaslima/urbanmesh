@@ -60,6 +60,7 @@ services:
       - "5103:5103"
     environment:
       DATABASE_URL: postgres://demo:demo@postgres:5432/demo
+      SF311_MODE: ${SF311_MODE:-auto}
     depends_on:
       - postgres
 
