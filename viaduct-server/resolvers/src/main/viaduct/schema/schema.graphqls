@@ -10,10 +10,17 @@ type Customer {
   riskLevel: String
 
   billing: BillingAccount @resolver
+  support: SupportSummary @resolver
 }
 
 type BillingAccount {
   balance: Float
   overdueInvoices: Int
   paymentRisk: String
+}
+
+type SupportSummary {
+  openTickets: Int
+  latestIssue: String
+  escalationStatus: String
 }
