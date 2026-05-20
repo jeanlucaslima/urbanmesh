@@ -42,6 +42,17 @@ type CivicCaseSummary {
   openCases: Int
   latestIssue: String
   escalationStatus: String
+  source: String
+  recentCases: [CivicCase!]
+}
+
+type CivicCase {
+  caseId: String
+  category: String
+  type: String
+  status: String
+  openedAt: String
+  address: String
 }
 
 type TransitSummary {

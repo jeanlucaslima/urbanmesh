@@ -4,6 +4,7 @@ import com.example.viadapp.resolvers.internal.InternalClient
 import com.example.viadapp.resolvers.internal.PolicyClient
 import com.example.viadapp.resolvers.internal.ServiceUrls
 import com.example.viadapp.resolvers.resolverbases.CityBlockResolvers
+import viaduct.api.grts.CivicCase
 import viaduct.api.grts.CivicCaseSummary
 import viaduct.api.resolver.Resolver
 
@@ -13,36 +14,42 @@ class CityBlockCivicResolver : CityBlockResolvers.Civic() {
         val blockId = ctx.getObjectValue().getId()
         val node = InternalClient.getJson(
             "civic-service",
-            "${ServiceUrls.civic}/civic/blocks/$blockId/cases"
+            "${ServiceUrls.civic}/blocks/$blockId/civic"
         ) ?: return null
 
-        val cases = if (node.isArray) node.toList() else emptyList()
-        val openCases = cases.filter { it["status"]?.asText() == "open" }
-        val highSev = openCases.any { it["severity"]?.asText() == "high" }
-        val medSev = openCases.any { it["severity"]?.asText() == "medium" }
+        val openCases = node["openCases"]?.takeUnless { it.isNull }?.asInt() ?: 0
+        val latestIssue = node["latestIssue"]?.takeUnless { it.isNull }?.asText()
+        val rawEscalation = node["escalationStatus"]?.takeUnless { it.isNull }?.asText()
+        val source = node["source"]?.takeUnless { it.isNull }?.asText()
 
-        val severityRank = { s: String? ->
-            when (s) { "high" -> 3; "medium" -> 2; "low" -> 1; else -> 0 }
-        }
-        val latest = openCases.maxByOrNull { severityRank(it["severity"]?.asText()) }
-        val latestIssue = latest?.get("title")?.takeUnless { it.isNull }?.asText()
-
-        val rawEscalation = when {
-            highSev -> "ESCALATED"
-            medSev -> "MONITORING"
-            openCases.isNotEmpty() -> "NORMAL"
-            else -> "NONE"
-        }
         val escalationStatus = if (PolicyClient.isAllowed("CivicCaseSummary.escalationStatus", blockId)) {
             rawEscalation
         } else {
             null
         }
 
+        val recentCasesNode = node["recentCases"]
+        val recentCases: List<CivicCase> = if (recentCasesNode != null && recentCasesNode.isArray) {
+            recentCasesNode.map { c ->
+                CivicCase.of(ctx) {
+                    caseId(c["caseId"]?.takeUnless { it.isNull }?.asText())
+                    category(c["category"]?.takeUnless { it.isNull }?.asText())
+                    type(c["type"]?.takeUnless { it.isNull }?.asText())
+                    status(c["status"]?.takeUnless { it.isNull }?.asText())
+                    openedAt(c["openedAt"]?.takeUnless { it.isNull }?.asText())
+                    address(c["address"]?.takeUnless { it.isNull }?.asText())
+                }
+            }
+        } else {
+            emptyList()
+        }
+
         return CivicCaseSummary.of(ctx) {
-            openCases(openCases.size)
+            openCases(openCases)
             latestIssue(latestIssue)
             escalationStatus(escalationStatus)
+            source(source)
+            recentCases(recentCases)
         }
     }
 }
