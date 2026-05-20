@@ -1,0 +1,5 @@
+services:
+  viaduct-server:
+    build: ./viaduct-server
+    ports:
+      - "8080:8080"

@@ -1,0 +1,10 @@
+extend type Query {
+  greeting: String @resolver
+  customer(id: ID!): Customer @resolver
+}
+
+type Customer {
+  id: ID!
+  name: String
+  status: String
+}
