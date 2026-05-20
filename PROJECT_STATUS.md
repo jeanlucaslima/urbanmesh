@@ -4,7 +4,7 @@
 
 | Field               | Value                                                       |
 | ------------------- | ----------------------------------------------------------- |
-| Last completed PRD  | PRD E.5 — Make It UrbanMesh                                 |
+| Last completed PRD  | PRD E.5a — SF 311 civic source                              |
 | Current architecture| Full UrbanMesh civic graph: Viaduct + policy + agent + frontend over location / permits / civic / transit / census domains |
 | Last verification   | `./scripts/verify.sh` pending re-run with UrbanMesh checks  |
 | Known residuals     | manual browser click-through; manual GraphiQL spot-check; no real SF open-data ingestion |
@@ -64,8 +64,9 @@ Reference only; not part of the active demo.
 ## What is not built yet
 
 - No LLM API calls. The agent is deterministic.
-- No real SF open-data ingestion. Block / permit / civic / transit /
-  census data is fixture data only.
+- Civic cases are backed by SF 311 (DataSF / Socrata dataset
+  `vw6y-z8j6`) with deterministic fixture fallback. Other domains
+  (location, permits, transit, census) are still fixture data only.
 - No maps in the UI.
 - No authentication.
 - No persistence of agent runs.

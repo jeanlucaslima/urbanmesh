@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# For offline verification, recommend starting the stack with
+# SF311_MODE=fixture so the civic-service does not depend on the network.
+# verify.sh accepts either mode; the SF 311 stage checks that source is
+# one of the known values and that the live mode is exercised when set.
+
 section() {
   echo ""
   echo "==> $1"
@@ -57,7 +62,7 @@ AGENT='http://localhost:5005'
 full_query() {
   local role="$1"
   cat <<EOF
-{"query":"query { block(id: \"SF-1027\", actorRole: $role) { id name neighborhood planningStatus planningRisk zoning { district allowedUses heightLimit specialUseDistrict } permits { activePermits recentPermits estimatedProjectValue complianceRisk } civic { openCases latestIssue escalationStatus } transit { nearbyStops accessScore ridershipTrend } census { population medianIncome housingDensity } } }"}
+{"query":"query { block(id: \"SF-1027\", actorRole: $role) { id name neighborhood planningStatus planningRisk zoning { district allowedUses heightLimit specialUseDistrict } permits { activePermits recentPermits estimatedProjectValue complianceRisk } civic { openCases latestIssue escalationStatus source } transit { nearbyStops accessScore ridershipTrend } census { population medianIncome housingDensity } } }"}
 EOF
 }
 
@@ -148,6 +153,16 @@ require_contains /tmp/d_transit.json '"increasing"'
 curl -fsS http://localhost:5106/census/blocks/SF-1027 > /tmp/d_census.json
 require_contains /tmp/d_census.json '"housingDensity"'
 
+# UrbanMesh civic summary endpoint must return a known source and the
+# summarized shape (openCases, latestIssue, escalationStatus, source).
+curl -fsS http://localhost:5103/blocks/SF-1027/civic > /tmp/d_civic_summary.json
+require_contains /tmp/d_civic_summary.json '"openCases"'
+require_contains /tmp/d_civic_summary.json '"escalationStatus"'
+if ! grep -qE '"source" *: *"(sf-311-live|fixture-fallback)"' /tmp/d_civic_summary.json; then
+  cat /tmp/d_civic_summary.json
+  fail "civic summary missing a known source value."
+fi
+
 section "[5/19] Checking policy-service /check"
 
 curl -fsS -X POST http://localhost:5105/check -H 'Content-Type: application/json' \
@@ -191,6 +206,10 @@ curl -fsS -X POST "$GQL" -H 'Content-Type: application/json' \
   --data-binary "$(full_query PUBLIC_AI_ASSISTANT)" > /tmp/q_ai.json
 require_no_errors /tmp/q_ai.json
 require_contains /tmp/q_ai.json '"16th & Mission"'
+if ! grep -qE '"source" *: *"(sf-311-live|fixture-fallback)"' /tmp/q_ai.json; then
+  cat /tmp/q_ai.json
+  fail "Viaduct civic.source missing a known value."
+fi
 require_contains /tmp/q_ai.json '"planningRisk" *: *null'
 require_contains /tmp/q_ai.json '"estimatedProjectValue" *: *null'
 require_contains /tmp/q_ai.json '"complianceRisk" *: *null'
@@ -347,6 +366,10 @@ require_contains /tmp/f_app.tsx 'received a policy-filtered view'
 for label in 'Public AI Assistant' 'Civic Operator' 'Permit Analyst' 'City Admin'; do
   require_contains /tmp/f_app.tsx "$label"
 done
+
+# SF 311 surface (PRD E.5a)
+require_contains /tmp/f_app.tsx 'SF 311'
+require_contains /tmp/f_app.tsx 'SF Open Data'
 
 section "[16/19] Architecture constraint: agent source"
 

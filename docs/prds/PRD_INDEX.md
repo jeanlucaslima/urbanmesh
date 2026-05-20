@@ -12,6 +12,7 @@
 | E    | Demo polish + talk alignment                                 | complete     |
 | E-QA | Verify demo polish                                           | complete     |
 | E.5  | Make It UrbanMesh (civic graph domain migration)             | complete     |
+| E.5a | SF 311 civic source (first real DataSF integration)          | complete     |
 | F    | Rehearsal / failure-mode QA                                  | next         |
 
 ## Current state

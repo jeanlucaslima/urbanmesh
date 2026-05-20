@@ -5,8 +5,9 @@
 ## Before the talk
 
 ```bash
-docker compose up --build -d
-./scripts/verify.sh
+docker compose up --build -d           # SF311_MODE=auto (live SF 311 + fallback)
+./scripts/verify.sh                    # uses fixture mode, works offline
+./scripts/check-sf311-live.sh          # optional: confirm live SF 311 reachable
 ```
 
 Open three tabs in advance:
@@ -36,6 +37,8 @@ The console is the primary surface. Click presets, don't type.
    > services.
 4. Point at:
    - the **answer**: notice the "Some sensitive planning fields were restricted" block
+   - the **civic source** line in the evidence panel — should read
+     `SF 311 Cases — SF Open Data (live)` when the network is up
    - **services coordinated by the graph**: six chips
    - **blocked fields**: four fields (`CityBlock.planningRisk`,
      `PermitSummary.estimatedProjectValue`,

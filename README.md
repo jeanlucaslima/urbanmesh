@@ -5,6 +5,12 @@ UrbanMesh is a Viaduct-powered civic graph demo over San Francisco.
 The demo asks about city blocks, not customers. The graph composes
 location, permits, civic cases, transit, census, and policy domains.
 
+**Civic cases are backed by a real public source: SF 311 Cases
+(DataSF / Socrata dataset `vw6y-z8j6`).** The demo runs in
+`SF311_MODE=auto` by default — try the live API, fall back to fixtures
+if the network is unavailable. Verification uses fixture mode so
+`./scripts/verify.sh` works offline.
+
 ```
 Browser UI                              GraphiQL / curl
      │                                         │
@@ -52,8 +58,10 @@ build if the agent or frontend source ever names a city service.
 ## Run locally
 
 ```bash
-docker compose up --build -d
-./scripts/verify.sh
+docker compose up --build -d                 # SF311_MODE=auto (live + fallback)
+SF311_MODE=fixture docker compose up -d      # offline / hermetic
+./scripts/verify.sh                          # always works offline
+./scripts/check-sf311-live.sh                # optional: probe live SF 311
 ```
 
 | Surface              | URL                                |
