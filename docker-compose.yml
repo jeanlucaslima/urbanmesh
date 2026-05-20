@@ -8,11 +8,13 @@ services:
       BILLING_SERVICE_URL: http://billing-service:5102
       SUPPORT_SERVICE_URL: http://support-service:5103
       USAGE_SERVICE_URL: http://usage-service:5104
+      POLICY_SERVICE_URL: http://policy-service:5105
     depends_on:
       - customer-service
       - billing-service
       - support-service
       - usage-service
+      - policy-service
 
   customer-service:
     build: ./services/customer-service
@@ -49,6 +51,11 @@ services:
       DATABASE_URL: postgres://demo:demo@postgres:5432/demo
     depends_on:
       - postgres
+
+  policy-service:
+    build: ./services/policy-service
+    ports:
+      - "5105:5105"
 
   postgres:
     image: postgres:16
