@@ -1,5 +1,5 @@
 {
-  "name": "billing-service",
+  "name": "transit-service",
   "version": "0.1.0",
   "private": true,
   "type": "module",

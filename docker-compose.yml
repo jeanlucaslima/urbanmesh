@@ -22,20 +22,22 @@ services:
     ports:
       - "8080:8080"
     environment:
-      CUSTOMER_SERVICE_URL: http://customer-service:5101
-      BILLING_SERVICE_URL: http://billing-service:5102
-      SUPPORT_SERVICE_URL: http://support-service:5103
-      USAGE_SERVICE_URL: http://usage-service:5104
+      LOCATION_SERVICE_URL: http://location-service:5101
+      PERMITS_SERVICE_URL: http://permits-service:5102
+      CIVIC_SERVICE_URL: http://civic-service:5103
+      TRANSIT_SERVICE_URL: http://transit-service:5104
       POLICY_SERVICE_URL: http://policy-service:5105
+      CENSUS_SERVICE_URL: http://census-service:5106
     depends_on:
-      - customer-service
-      - billing-service
-      - support-service
-      - usage-service
+      - location-service
+      - permits-service
+      - civic-service
+      - transit-service
+      - census-service
       - policy-service
 
-  customer-service:
-    build: ./services/customer-service
+  location-service:
+    build: ./services/location-service
     ports:
       - "5101:5101"
     environment:
@@ -43,8 +45,8 @@ services:
     depends_on:
       - postgres
 
-  billing-service:
-    build: ./services/billing-service
+  permits-service:
+    build: ./services/permits-service
     ports:
       - "5102:5102"
     environment:
@@ -52,8 +54,8 @@ services:
     depends_on:
       - postgres
 
-  support-service:
-    build: ./services/support-service
+  civic-service:
+    build: ./services/civic-service
     ports:
       - "5103:5103"
     environment:
@@ -61,10 +63,19 @@ services:
     depends_on:
       - postgres
 
-  usage-service:
-    build: ./services/usage-service
+  transit-service:
+    build: ./services/transit-service
     ports:
       - "5104:5104"
+    environment:
+      DATABASE_URL: postgres://demo:demo@postgres:5432/demo
+    depends_on:
+      - postgres
+
+  census-service:
+    build: ./services/census-service
+    ports:
+      - "5106:5106"
     environment:
       DATABASE_URL: postgres://demo:demo@postgres:5432/demo
     depends_on:

@@ -1,5 +1,5 @@
 {
-  "name": "usage-service",
+  "name": "permits-service",
   "version": "0.1.0",
   "private": true,
   "type": "module",
