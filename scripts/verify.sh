@@ -298,11 +298,14 @@ fi
 section "[18/19] Apollo absence in active runtime"
 
 APOLLO_PATTERN='@apollo/server\|expressMiddleware\|graphql-gateway\|ApolloServer\|apollo-server'
+# Documentation files (AGENTS.md, .skills/, .viaduct/, docs/, PROJECT_STATUS.md)
+# intentionally name these tokens to describe the rule itself, so they are
+# excluded along with the verify script. Runtime/config files are not.
 MATCHES=$(grep -RIn \
   --exclude-dir=prototype-apollo --exclude-dir=.git \
   --exclude-dir=node_modules --exclude-dir=build --exclude-dir=.gradle \
-  --exclude-dir=.skills --exclude-dir=.viaduct \
-  --exclude=verify.sh --exclude=AGENTS.md \
+  --exclude-dir=.skills --exclude-dir=.viaduct --exclude-dir=docs \
+  --exclude=verify.sh --exclude=AGENTS.md --exclude=PROJECT_STATUS.md \
   "$APOLLO_PATTERN" . 2>/dev/null || true)
 if [ -n "$MATCHES" ]; then
   echo "$MATCHES"
