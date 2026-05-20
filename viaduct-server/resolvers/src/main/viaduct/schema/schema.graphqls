@@ -7,4 +7,5 @@ type Customer {
   id: ID!
   name: String
   status: String
+  riskLevel: String
 }

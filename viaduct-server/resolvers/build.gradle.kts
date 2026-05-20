@@ -10,6 +10,9 @@ viaductModule {
 }
 
 dependencies {
+    implementation(enforcedPlatform(libs.viaduct.bom))
     api(libs.viaduct.api)
     implementation(libs.viaduct.runtime)
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.kotlinx.coroutines.core)
 }
