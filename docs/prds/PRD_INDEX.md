@@ -8,8 +8,10 @@
 | C-skills | Add Viaduct agent skills + remove Apollo leakage        | complete     |
 | C   | Policy enforcement + execution metadata                      | complete     |
 | D   | Agent orchestrator + frontend                                | complete     |
-| D-QA| Verify agent + frontend (covered by `scripts/verify.sh`)     | covered      |
-| E   | Demo polish / rehearsal QA                                   | next         |
+| D-QA| Verify agent + frontend                                      | complete     |
+| E   | Demo polish + talk alignment                                 | complete     |
+| E-QA| Verify demo polish                                           | pending      |
+| F   | Rehearsal / failure-mode QA                                  | next         |
 
 ## Verification
 
@@ -21,15 +23,14 @@ docker compose up --build -d
 `./scripts/verify.sh` runs 19 stages covering compose topology, all
 service healths, Postgres seed, direct service responses, policy-service
 behavior, GraphQL responses for all four roles, executionMetadata in
-extensions, agent `/run` for AI / ADMIN / missing-customer, frontend
-HTML reachability, the agent and frontend architecture-grep guardrails,
-Apollo absence, and the prototype/skills layout.
+extensions, agent `/run` for AI / ADMIN / missing-customer (with the
+stable envelope shape), frontend HTML + React bundle reachability,
+the agent and frontend architecture-grep guardrails, Apollo absence,
+and the prototype/skills layout.
 
-## Manual residuals after PRD D
+## On-stage runbook
 
-- Open http://localhost:3000 in a browser and click **Run through
-  Viaduct** with role AI_ASSISTANT, then ADMIN. Confirm the answer,
-  query, and metadata panels render as expected.
-- Open http://localhost:8080/graphiql and run the AI_ASSISTANT and
-  ADMIN versions of `CustomerContext` to confirm the same data
-  reaches developers via the same endpoint.
+See [`docs/demo-runbook.md`](../demo-runbook.md) for the pre-talk
+warmup, the recommended preset sequence (AI_ASSISTANT then ADMIN),
+the closing line, and the fallback ladder (frontend → curl → GraphiQL
+→ README).

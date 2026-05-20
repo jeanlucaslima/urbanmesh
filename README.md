@@ -53,8 +53,10 @@ build if the agent or frontend source ever names an internal service.
 | C-skills | done | agent skills + Apollo containment              |
 | C   | done     | role-aware policy + execution metadata            |
 | D   | done     | agent orchestrator + frontend                     |
+| E   | done     | demo polish, presets, runbook                     |
 
-See `PROJECT_STATUS.md` and `docs/prds/PRD_INDEX.md`.
+See `PROJECT_STATUS.md` and `docs/prds/PRD_INDEX.md`. For the on-stage
+sequence and fallback ladder, see [`docs/demo-runbook.md`](docs/demo-runbook.md).
 
 ## Run locally
 
@@ -79,24 +81,41 @@ docker compose up --build -d
 
 ## Manual demo
 
-1. Open http://localhost:3000.
-2. Default task is **"Explain customer C-1027 risk"**, default role
-   **AI_ASSISTANT**.
-3. Click **Run through Viaduct**. You should see:
+Open http://localhost:3000. The frontend ships with **demo presets**
+above the task box — clicking a preset sets the task and role but does
+not auto-run, so the presenter stays in control.
+
+Recommended sequence:
+
+1. Click preset **Risk review** (AI_ASSISTANT, C-1027), then
+   **Run through Viaduct**. You should see:
    - an answer that mentions which fields were restricted
    - the GraphQL query the agent issued
-   - `servicesTouched` listing five backing services
+   - `servicesTouched` listing five backing services as chips
    - `blockedFields` for `Customer.riskLevel`,
      `BillingAccount.balance`, `BillingAccount.paymentRisk`,
      `SupportSummary.escalationStatus`
-   - matching `policyDecisions` rows with DENY reasons
-4. Switch the role to **ADMIN** and click run again. The same answer
-   panel now shows risk level, balance, payment risk, and escalation
-   status. `blockedFields` is empty. `policyDecisions` shows ALLOW
-   reasons.
+   - matching `policyDecisions` rows with DENY badges and reasons
+2. Click preset **Admin view** (ADMIN, same task), then run again.
+   The answer now shows risk level, balance, payment risk, and
+   escalation status. `blockedFields` reads **No blocked fields**.
+   Decisions become ALLOW.
+3. Optional: **Support situation** / **Billing risk** /
+   **Healthy customer** presets show role and customer variations.
+
+What to say while you run it:
+
+> The agent is just another GraphQL client. It asks the graph for
+> customer context. The graph calls customer, billing, support,
+> usage, and policy services. Some fields are blocked. Switch the
+> role to ADMIN — same task, same query shape, different policy
+> context. Now the sensitive fields are visible. The agent did not
+> get a side door. It used the graph.
 
 GraphiQL remains available at http://localhost:8080/graphiql for the
 same queries.
+
+Full on-stage runbook with fallback paths: [`docs/demo-runbook.md`](docs/demo-runbook.md).
 
 ## Demo customers
 
