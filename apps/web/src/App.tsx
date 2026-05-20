@@ -10,6 +10,20 @@ const ROLES: ActorRole[] = [
 
 const DEFAULT_TASK = "Explain customer C-1027 risk";
 
+interface Preset {
+  label: string;
+  task: string;
+  role: ActorRole;
+}
+
+const PRESETS: Preset[] = [
+  { label: "Risk review",       task: "Explain customer C-1027 risk",              role: "AI_ASSISTANT"  },
+  { label: "Admin view",        task: "Explain customer C-1027 risk",              role: "ADMIN"         },
+  { label: "Support situation", task: "Explain customer C-1027 support situation", role: "SUPPORT_AGENT" },
+  { label: "Billing risk",      task: "Explain customer C-1027 billing risk",      role: "FINANCE_AGENT" },
+  { label: "Healthy customer",  task: "Explain customer C-1001 risk",              role: "AI_ASSISTANT"  },
+];
+
 export default function App() {
   const [task, setTask] = useState(DEFAULT_TASK);
   const [actorRole, setActorRole] = useState<ActorRole>("AI_ASSISTANT");
@@ -52,6 +66,22 @@ export default function App() {
 
       <section className="controls card">
         <h2>Task</h2>
+        <div className="presets" aria-label="demo presets">
+          <span className="presets-label">Presets:</span>
+          {PRESETS.map((p) => (
+            <button
+              type="button"
+              key={p.label}
+              className="preset"
+              onClick={() => {
+                setTask(p.task);
+                setActorRole(p.role);
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
         <textarea
           value={task}
           onChange={(e) => setTask(e.target.value)}

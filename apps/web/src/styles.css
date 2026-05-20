@@ -65,6 +65,34 @@ textarea, select, button {
 
 textarea { margin-bottom: 8px; resize: vertical; }
 
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.presets-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 4px;
+}
+button.preset {
+  width: auto;
+  padding: 4px 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+}
+button.preset:hover {
+  background: rgba(95, 206, 193, 0.10);
+  border-color: var(--mint);
+  color: var(--mint);
+}
+
 .controls-row {
   display: grid;
   grid-template-columns: 1fr auto;
