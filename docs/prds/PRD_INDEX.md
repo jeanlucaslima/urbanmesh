@@ -7,14 +7,9 @@
 | B   | Internal service integration for Viaduct tenant modules      | complete     |
 | C-skills | Add Viaduct agent skills + remove Apollo leakage        | complete     |
 | C   | Policy enforcement + execution metadata                      | complete     |
-| C-QA| Verify policy + metadata (informal — covered by verify.sh)   | covered      |
-| D   | Agent orchestrator + frontend                                | next         |
-
-Reference: each PRD lives in the conversation history. This index tracks
-which phases have actually landed in the repo.
-
-The active demo at the repo root reflects PRD C. The `prototype-apollo/`
-directory is preserved reference only.
+| D   | Agent orchestrator + frontend                                | complete     |
+| D-QA| Verify agent + frontend (covered by `scripts/verify.sh`)     | covered      |
+| E   | Demo polish / rehearsal QA                                   | next         |
 
 ## Verification
 
@@ -23,8 +18,18 @@ docker compose up --build -d
 ./scripts/verify.sh
 ```
 
-`./scripts/verify.sh` runs 14 stages covering compose topology, all
+`./scripts/verify.sh` runs 19 stages covering compose topology, all
 service healths, Postgres seed, direct service responses, policy-service
-behavior, GraphQL responses for all four roles, execution metadata in
-extensions, Apollo absence in the active runtime, prototype
-preservation, and the agent-skills layout.
+behavior, GraphQL responses for all four roles, executionMetadata in
+extensions, agent `/run` for AI / ADMIN / missing-customer, frontend
+HTML reachability, the agent and frontend architecture-grep guardrails,
+Apollo absence, and the prototype/skills layout.
+
+## Manual residuals after PRD D
+
+- Open http://localhost:3000 in a browser and click **Run through
+  Viaduct** with role AI_ASSISTANT, then ADMIN. Confirm the answer,
+  query, and metadata panels render as expected.
+- Open http://localhost:8080/graphiql and run the AI_ASSISTANT and
+  ADMIN versions of `CustomerContext` to confirm the same data
+  reaches developers via the same endpoint.

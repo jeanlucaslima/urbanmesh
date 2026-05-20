@@ -1,48 +1,48 @@
 # urbanmesh-demo
 
-This is the Viaduct-first demo foundation for *Turning San Francisco Into a
-GraphQL Server*.
-
-The active demo runs a Ktor-hosted Viaduct server whose tenant resolvers
-call internal customer, billing, support, and usage services, **enforce
-role-based field policy** via a separate `policy-service`, and emit
-**execution metadata** in the GraphQL response `extensions`. The old
-Apollo prototype is preserved under `prototype-apollo/` for reference only.
-
-## Architecture
+This is the full demo for *Turning San Francisco Into a GraphQL Server*.
 
 ```
-GraphiQL / curl / (future) UI / (future) AI client
-                       │
-                       ▼
-                  /graphql  (Ktor)
-                       │
-                       ▼
-                Viaduct runtime
-                       │
-                       ▼
-               tenant resolvers
-            ┌─────────┬─────────┬────────┬───────┐
-            │customer │ billing │support │ usage │
-            └────┬────┴────┬────┴───┬────┴───┬───┘
-                 │         │        │        │
-                 ▼         ▼        ▼        ▼
-         customer-svc  billing-svc  support  usage-svc
-                 │         │        │        │
-                 └────┬────┴────────┴────────┘
-                      ▼                ▲
-                  Postgres             │
-                                       │
-            policy-service ◄───────────┘
-            (called by resolvers
-             before exposing
-             sensitive fields)
-
-GraphQL response = data + extensions.executionMetadata
+Browser UI                              GraphiQL / curl
+     │                                         │
+     ▼                                         │
+agent-orchestrator                             │
+     │                                         │
+     └──────────────┬──────────────────────────┘
+                    ▼
+              Viaduct /graphql  (Ktor)
+                    │
+                    ▼
+             tenant resolvers
+       (customer · billing · support · usage)
+                    │
+                    ▼
+        internal services + policy-service
+                    │
+                    ▼
+                 Postgres
 ```
 
-Only the viaduct-server calls the internal services and policy-service.
-There is no agent or frontend in the active scope yet (PRD D).
+The active GraphQL server is `viaduct-server`. Both the UI client and the
+agent client go through the same `/graphql` endpoint. The agent does not
+call customer, billing, support, usage, or policy services directly.
+
+The old Apollo prototype is preserved under `prototype-apollo/` for
+reference only.
+
+## What PRD D proves
+
+The agent is not special.
+
+- It does not call `customer-service`.
+- It does not call `billing-service`.
+- It does not call `support-service`.
+- It does not call `usage-service`.
+- It does not call `policy-service`.
+
+It calls **the graph**. Viaduct coordinates services, enforces policy,
+and returns execution metadata. `scripts/verify.sh` grep-fails the
+build if the agent or frontend source ever names an internal service.
 
 ## Phase status
 
@@ -50,47 +50,11 @@ There is no agent or frontend in the active scope yet (PRD D).
 | --- | -------- | ------------------------------------------------- |
 | A   | done     | Viaduct/Ktor baseline, fixture customer           |
 | B   | done     | customer/billing/support/usage tenant resolvers   |
-| C-skills | done | agent skills (`AGENTS.md`, `.skills/`, `.viaduct/agents/`) + Apollo containment |
+| C-skills | done | agent skills + Apollo containment              |
 | C   | done     | role-aware policy + execution metadata            |
-| D   | next     | agent orchestrator + frontend (future)            |
+| D   | done     | agent orchestrator + frontend                     |
 
-See also `PROJECT_STATUS.md` and `docs/prds/PRD_INDEX.md`.
-
-## Starter provenance
-
-Based on [`viaduct-dev/ktor-starter`](https://github.com/viaduct-dev/ktor-starter).
-
-Starter commit: `282855aaf736348830a43c10bc5a691c13d4ba4e`
-
-## Repo layout
-
-```
-urbanmesh-demo/
-├── AGENTS.md               coding-agent entry point
-├── .skills/                local project skills
-├── .viaduct/agents/        vendored Viaduct framework skills
-├── viaduct-server/         active Viaduct/Ktor app
-│   └── resolvers/          tenant module
-│       └── src/main/kotlin/com/example/viadapp/resolvers/
-│           ├── customer/   Query.customer + Customer fields
-│           ├── billing/    Customer.billing → BillingAccount
-│           ├── support/    Customer.support → SupportSummary
-│           ├── usage/      Customer.usage   → UsageSummary
-│           └── internal/   InternalClient, PolicyClient, RequestState
-├── services/
-│   ├── customer-service/   /customers/:id
-│   ├── billing-service/    /billing/:customerId
-│   ├── support-service/    /support/customers/:customerId/tickets
-│   ├── usage-service/      /usage/customers/:customerId
-│   └── policy-service/     POST /check  -> {allowed, field, actorRole, reason}
-├── data/seed.sql
-├── scripts/verify.sh       14-stage PRD C verification
-├── docker-compose.yml
-├── prototype-apollo/       archived Apollo prototype (reference only)
-├── PROJECT_STATUS.md
-├── docs/prds/PRD_INDEX.md
-└── README.md
-```
+See `PROJECT_STATUS.md` and `docs/prds/PRD_INDEX.md`.
 
 ## Run locally
 
@@ -101,6 +65,8 @@ docker compose up --build -d
 
 | Surface              | URL                                |
 | -------------------- | ---------------------------------- |
+| Frontend             | http://localhost:3000              |
+| Agent (`/run`)       | http://localhost:5005              |
 | GraphQL              | http://localhost:8080/graphql      |
 | GraphiQL             | http://localhost:8080/graphiql     |
 | viaduct-server health| http://localhost:8080/health       |
@@ -110,6 +76,27 @@ docker compose up --build -d
 | usage-service        | http://localhost:5104              |
 | policy-service       | http://localhost:5105              |
 | Postgres             | postgres://demo:demo@localhost:5432/demo |
+
+## Manual demo
+
+1. Open http://localhost:3000.
+2. Default task is **"Explain customer C-1027 risk"**, default role
+   **AI_ASSISTANT**.
+3. Click **Run through Viaduct**. You should see:
+   - an answer that mentions which fields were restricted
+   - the GraphQL query the agent issued
+   - `servicesTouched` listing five backing services
+   - `blockedFields` for `Customer.riskLevel`,
+     `BillingAccount.balance`, `BillingAccount.paymentRisk`,
+     `SupportSummary.escalationStatus`
+   - matching `policyDecisions` rows with DENY reasons
+4. Switch the role to **ADMIN** and click run again. The same answer
+   panel now shows risk level, balance, payment risk, and escalation
+   status. `blockedFields` is empty. `policyDecisions` shows ALLOW
+   reasons.
+
+GraphiQL remains available at http://localhost:8080/graphiql for the
+same queries.
 
 ## Demo customers
 
@@ -121,14 +108,8 @@ docker compose up --build -d
 
 ## Actor roles
 
-The `customer` query requires `actorRole: ActorRole!`. Available values:
-
-```
-AI_ASSISTANT    SUPPORT_AGENT    FINANCE_AGENT    ADMIN
-```
-
-Sensitive fields call `policy-service` before returning. A denied field
-is set to `null` in `data` and recorded in
+Sensitive fields call `policy-service` before returning data. A denied
+field becomes `null` in `data` and is listed in
 `extensions.executionMetadata.blockedFields`.
 
 | Field                              | AI_ASSISTANT | SUPPORT_AGENT | FINANCE_AGENT | ADMIN |
@@ -139,80 +120,30 @@ is set to `null` in `data` and recorded in
 | `SupportSummary.escalationStatus`  | denied       | allowed       | denied        | allowed |
 | All non-sensitive fields           | allowed      | allowed       | allowed       | allowed |
 
-## Sample query — AI_ASSISTANT
+## Repo layout
 
-```graphql
-query CustomerContext {
-  customer(id: "C-1027", actorRole: AI_ASSISTANT) {
-    id
-    name
-    status
-    riskLevel
-    billing {
-      balance
-      overdueInvoices
-      paymentRisk
-    }
-    support {
-      openTickets
-      latestIssue
-      escalationStatus
-    }
-    usage {
-      activeUsers
-      monthlyEvents
-      usageTrend
-    }
-  }
-}
 ```
-
-Response (abridged):
-
-```json
-{
-  "data": {
-    "customer": {
-      "id": "C-1027",
-      "name": "AcmeCloud",
-      "status": "RISKY",
-      "riskLevel": null,
-      "billing":  { "balance": null, "overdueInvoices": 3, "paymentRisk": null },
-      "support":  { "openTickets": 3,
-                    "latestIssue": "API 5xx errors during peak hours",
-                    "escalationStatus": null },
-      "usage":    { "activeUsers": 38, "monthlyEvents": 210000,
-                    "usageTrend": "declining" }
-    }
-  },
-  "extensions": {
-    "executionMetadata": {
-      "servicesTouched": [
-        "billing-service", "customer-service", "policy-service",
-        "support-service", "usage-service"
-      ],
-      "blockedFields": [
-        "Customer.riskLevel",
-        "BillingAccount.balance",
-        "SupportSummary.escalationStatus",
-        "BillingAccount.paymentRisk"
-      ],
-      "policyDecisions": [
-        { "field": "Customer.riskLevel",
-          "decision": "DENY",
-          "reason": "AI assistants cannot access customer risk level.",
-          "actorRole": "AI_ASSISTANT" }
-        /* ...one per sensitive field... */
-      ]
-    }
-  }
-}
+urbanmesh-demo/
+├── AGENTS.md               coding-agent entry point
+├── .skills/                local project skills
+├── .viaduct/agents/        vendored Viaduct framework skills
+├── apps/
+│   ├── web/                React/Vite frontend
+│   └── agent-orchestrator/ Express agent, calls Viaduct only
+├── viaduct-server/         Ktor + Viaduct tenant resolvers
+├── services/
+│   ├── customer-service/
+│   ├── billing-service/
+│   ├── support-service/
+│   ├── usage-service/
+│   └── policy-service/
+├── data/seed.sql
+├── scripts/verify.sh       19-stage PRD D verification
+├── docker-compose.yml
+├── prototype-apollo/       archived Apollo prototype (reference only)
+├── PROJECT_STATUS.md
+└── docs/prds/PRD_INDEX.md
 ```
-
-## Sample query — ADMIN
-
-Same query, `actorRole: ADMIN`. All fields populated, `blockedFields: []`,
-all `policyDecisions` are `ALLOW`.
 
 ## Verify
 
@@ -220,31 +151,35 @@ all `policyDecisions` are `ALLOW`.
 ./scripts/verify.sh
 ```
 
-14 stages check: compose services up, all healths, Postgres seed, direct
-service responses (including `policy-service`), all four roles end-to-end,
-executionMetadata shape, the Apollo-absence and prototype-preserved
-guardrails, and the agent-skills layout.
+19 stages cover: compose topology, all health endpoints, Postgres seed,
+direct service responses, policy-service, GraphQL across all four roles,
+executionMetadata shape, agent `/run` for AI/ADMIN/missing-customer,
+frontend HTML, the two architecture grep guardrails (agent and frontend
+must not name internal services), Apollo absence, and the
+prototype/skills layout.
 
 ## Agent workflow
 
-Before coding, read [`AGENTS.md`](AGENTS.md).
-
-This repo uses two layers of agent guidance:
-
-- **Viaduct framework skills** vendored under [`.viaduct/agents/`](.viaduct/agents/)
-  from [`viaduct-dev/skills`](https://github.com/viaduct-dev/skills).
-- **Local project skills** under [`.skills/`](.skills/) defining this repo's
-  architecture, PRD workflow, commit cadence, verification requirements,
-  and demo constraints.
-
-When framework and local guidance conflict, local wins.
+Before coding, read [`AGENTS.md`](AGENTS.md). Local project skills live
+under [`.skills/`](.skills/); vendored Viaduct framework skills live
+under [`.viaduct/agents/`](.viaduct/agents/). When framework and local
+guidance conflict, local wins.
 
 The Apollo prototype is archived under [`prototype-apollo/`](prototype-apollo/)
 and is not part of the active demo.
 
-## Out of scope (deferred to PRD D)
+## Spoken demo claim
 
-- the agent orchestrator
-- the frontend
-- AI answer generation
-- UI role selector
+The UI is a client. The agent is also a client.
+
+Both go through the same Viaduct GraphQL endpoint.
+
+The agent does not call billing.
+The agent does not call support.
+The agent does not call usage.
+The agent does not call policy.
+
+It calls the graph.
+
+The graph coordinates services, enforces policy, and returns evidence
+about what happened.
