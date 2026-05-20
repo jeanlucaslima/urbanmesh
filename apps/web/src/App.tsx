@@ -135,16 +135,35 @@ export default function App() {
             customer, billing, support, usage, or policy services.
           </p>
 
+          {result?.executionMetadata && (
+            <p className="summary">
+              <span>
+                <strong>{result.executionMetadata.servicesTouched.length}</strong>{" "}
+                services
+              </span>
+              <span>
+                <strong>{result.executionMetadata.blockedFields.length}</strong>{" "}
+                blocked
+              </span>
+              <span>
+                <strong>{result.executionMetadata.policyDecisions.length}</strong>{" "}
+                decisions
+              </span>
+            </p>
+          )}
+
           <h3>Services coordinated by the graph</h3>
           <p className="hint">What the graph had to call.</p>
-          {result ? (
+          {result?.executionMetadata ? (
             result.executionMetadata.servicesTouched.length === 0 ? (
               <p className="muted">none</p>
             ) : (
               <div className="chips">
-                {result.executionMetadata.servicesTouched.map((s) => (
-                  <span className="chip" key={s}>{s}</span>
-                ))}
+                {[...result.executionMetadata.servicesTouched]
+                  .sort()
+                  .map((s) => (
+                    <span className="chip" key={s}>{s}</span>
+                  ))}
               </div>
             )
           ) : (
@@ -153,14 +172,16 @@ export default function App() {
 
           <h3>Blocked fields</h3>
           <p className="hint">What policy removed.</p>
-          {result ? (
+          {result?.executionMetadata ? (
             result.executionMetadata.blockedFields.length === 0 ? (
               <p className="empty-ok">No blocked fields</p>
             ) : (
               <ul className="blocked">
-                {result.executionMetadata.blockedFields.map((f) => (
-                  <li key={f}><code>{f}</code></li>
-                ))}
+                {[...result.executionMetadata.blockedFields]
+                  .sort()
+                  .map((f) => (
+                    <li key={f}><code>{f}</code></li>
+                  ))}
               </ul>
             )
           ) : (
@@ -169,20 +190,25 @@ export default function App() {
 
           <h3>Policy decisions</h3>
           <p className="hint">Why each sensitive field was allowed or denied.</p>
-          {result ? (
+          {result?.executionMetadata ? (
             result.executionMetadata.policyDecisions.length === 0 ? (
               <p className="muted">none</p>
             ) : (
               <ul className="policy">
-                {result.executionMetadata.policyDecisions.map((p, i) => (
-                  <li key={i} className={p.decision === "ALLOW" ? "allow" : "deny"}>
-                    <span className="badge">
-                      {p.decision === "ALLOW" ? "✓ ALLOW" : "✗ DENY"}
-                    </span>
-                    <code>{p.field}</code>
-                    <span className="reason">{p.reason}</span>
-                  </li>
-                ))}
+                {[...result.executionMetadata.policyDecisions]
+                  .sort((a, b) => a.field.localeCompare(b.field))
+                  .map((p, i) => (
+                    <li
+                      key={`${p.field}-${i}`}
+                      className={p.decision === "ALLOW" ? "allow" : "deny"}
+                    >
+                      <span className="badge">
+                        {p.decision === "ALLOW" ? "✓ ALLOW" : "✗ DENY"}
+                      </span>
+                      <code>{p.field}</code>
+                      <span className="reason">{p.reason}</span>
+                    </li>
+                  ))}
               </ul>
             )
           ) : (
