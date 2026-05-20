@@ -274,6 +274,15 @@ curl -fsS http://localhost:3000 > /tmp/f_index.html
 require_contains /tmp/f_index.html '<div id="root">'
 require_contains /tmp/f_index.html 'Viaduct Agent Demo'
 
+# Vite dev serves the SPA shell at /, with labels rendered by React.
+# Check the live App.tsx bundle for the role selector + button labels.
+curl -fsS http://localhost:3000/src/App.tsx > /tmp/f_app.tsx
+require_contains /tmp/f_app.tsx 'Run through Viaduct'
+require_contains /tmp/f_app.tsx 'AI_ASSISTANT'
+require_contains /tmp/f_app.tsx 'SUPPORT_AGENT'
+require_contains /tmp/f_app.tsx 'FINANCE_AGENT'
+require_contains /tmp/f_app.tsx 'ADMIN'
+
 section "[16/19] Architecture constraint: agent source"
 
 INTERNAL_PATTERN='customer-service\|billing-service\|support-service\|usage-service\|policy-service'
