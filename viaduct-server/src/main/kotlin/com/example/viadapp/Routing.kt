@@ -80,7 +80,15 @@ fun Application.configureRouting() {
                 ) {
                     viaduct.executeAsync(executionInput).await()
                 }
-                call.respond(result.toSpecification())
+
+                // Attach executionMetadata to the GraphQL response extensions.
+                val spec = result.toSpecification().toMutableMap()
+                @Suppress("UNCHECKED_CAST")
+                val existingExt = (spec["extensions"] as? Map<String, Any?>)?.toMutableMap()
+                    ?: mutableMapOf()
+                existingExt["executionMetadata"] = state.snapshot()
+                spec["extensions"] = existingExt
+                call.respond(spec)
             }
         }
 
