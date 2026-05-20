@@ -36,7 +36,15 @@ export default function App() {
     setError(null);
     try {
       const res = await runAgent(task, actorRole);
-      setResult(res);
+      if (res.validationError) {
+        setResult(null);
+        setError(res.validationError.message);
+      } else if (res.graphQLErrors) {
+        setResult(res);
+        setError("GraphQL returned errors. See the query panel.");
+      } else {
+        setResult(res);
+      }
     } catch (e: any) {
       setResult(null);
       setError(

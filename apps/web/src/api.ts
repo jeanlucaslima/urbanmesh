@@ -20,17 +20,23 @@ export interface ExecutionMetadata {
   policyDecisions: PolicyDecision[];
 }
 
-export interface AgentRunResponse {
-  answer: string;
-  query: string;
-  variables: { id: string; actorRole: ActorRole };
-  data: unknown;
-  executionMetadata: ExecutionMetadata;
+export interface ValidationError {
+  code: string;
+  message: string;
 }
 
-export interface AgentErrorResponse {
-  error: string;
-  message: string;
+// Stable envelope returned by the agent for both success and error paths.
+// Success: validationError and graphQLErrors are null; the rest are filled.
+// Validation error: only validationError is non-null.
+// Graph error: graphQLErrors and the planned query/variables are filled.
+export interface AgentRunResponse {
+  answer: string | null;
+  query: string | null;
+  variables: { id: string; actorRole: ActorRole } | null;
+  data: unknown | null;
+  executionMetadata: ExecutionMetadata | null;
+  validationError: ValidationError | null;
+  graphQLErrors: unknown[] | null;
 }
 
 export async function runAgent(
@@ -42,10 +48,10 @@ export async function runAgent(
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ task, actorRole }),
   });
-  const body = (await res.json()) as AgentRunResponse | AgentErrorResponse;
-  if (!res.ok) {
-    const err = body as AgentErrorResponse;
-    throw new Error(err.message || `agent returned HTTP ${res.status}`);
+  // The envelope shape is stable across HTTP statuses; parse it either way.
+  const body = (await res.json()) as AgentRunResponse;
+  if (!res.ok && !body.validationError && !body.graphQLErrors) {
+    throw new Error(`agent returned HTTP ${res.status}`);
   }
-  return body as AgentRunResponse;
+  return body;
 }

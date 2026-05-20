@@ -265,8 +265,10 @@ curl -s -X POST "$AGENT/run" -H 'Content-Type: application/json' \
   -d '{"task":"Explain risk","actorRole":"AI_ASSISTANT"}' \
   > /tmp/a_missing.json
 require_contains /tmp/a_missing.json '"missing_customer_id"'
-# The agent must not have called Viaduct: response must not contain Viaduct data shape.
-require_not_contains /tmp/a_missing.json '"executionMetadata"'
+# The envelope shape is stable: executionMetadata is null when the agent
+# never called Viaduct.
+require_contains /tmp/a_missing.json '"executionMetadata" *: *null'
+require_contains /tmp/a_missing.json '"validationError"'
 
 section "[15/19] Frontend reachable"
 

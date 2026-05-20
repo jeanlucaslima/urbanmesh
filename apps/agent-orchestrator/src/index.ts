@@ -14,6 +14,32 @@ app.get("/health", (_req, res) =>
   res.json({ ok: true, service: "agent-orchestrator" })
 );
 
+interface RunResponse {
+  answer: string | null;
+  query: string | null;
+  variables: { id: string; actorRole: string } | null;
+  data: unknown | null;
+  executionMetadata: {
+    servicesTouched: string[];
+    blockedFields: string[];
+    policyDecisions: Array<Record<string, unknown>>;
+  } | null;
+  validationError: { code: string; message: string } | null;
+  graphQLErrors: unknown[] | null;
+}
+
+function emptyResponse(): RunResponse {
+  return {
+    answer: null,
+    query: null,
+    variables: null,
+    data: null,
+    executionMetadata: null,
+    validationError: null,
+    graphQLErrors: null,
+  };
+}
+
 app.post("/run", async (req, res) => {
   try {
     const planned = plan(req.body?.task, req.body?.actorRole);
@@ -23,11 +49,13 @@ app.post("/run", async (req, res) => {
     );
 
     if (envelope.errors?.length) {
-      return res.status(502).json({
-        error: "graph_error",
-        message: "The graph returned errors.",
-        details: envelope.errors,
-      });
+      const body: RunResponse = {
+        ...emptyResponse(),
+        query: planned.query,
+        variables: planned.variables,
+        graphQLErrors: envelope.errors,
+      };
+      return res.status(502).json(body);
     }
 
     const customer = envelope.data?.customer ?? null;
@@ -39,25 +67,33 @@ app.post("/run", async (req, res) => {
       };
 
     const answer = buildAnswer(customer, planned.actorRole, metadata);
-
-    res.json({
+    const body: RunResponse = {
       answer,
       query: planned.query,
       variables: planned.variables,
-      data: envelope.data,
+      data: envelope.data ?? null,
       executionMetadata: metadata,
-    });
+      validationError: null,
+      graphQLErrors: null,
+    };
+    return res.json(body);
   } catch (err) {
     if (err instanceof PlannerError) {
-      return res
-        .status(400)
-        .json({ error: err.code, message: err.message });
+      const body: RunResponse = {
+        ...emptyResponse(),
+        validationError: { code: err.code, message: err.message },
+      };
+      return res.status(400).json(body);
     }
     console.error(err);
-    return res.status(500).json({
-      error: "internal_error",
-      message: (err as Error).message || "unknown error",
-    });
+    const body: RunResponse = {
+      ...emptyResponse(),
+      validationError: {
+        code: "internal_error",
+        message: (err as Error).message || "unknown error",
+      },
+    };
+    return res.status(500).json(body);
   }
 });
 
