@@ -45,6 +45,7 @@ export const URBAN_CONTEXT_QUERY = `query UrbanContext($id: ID!, $actorRole: Act
       openCases
       latestIssue
       escalationStatus
+      source
     }
     transit {
       nearbyStops

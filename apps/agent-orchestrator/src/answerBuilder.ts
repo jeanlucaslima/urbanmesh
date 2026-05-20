@@ -22,6 +22,7 @@ interface CityBlock {
     openCases?: number | null;
     latestIssue?: string | null;
     escalationStatus?: string | null;
+    source?: string | null;
   } | null;
   transit?: {
     nearbyStops?: number | null;
@@ -124,6 +125,14 @@ export function buildAnswer(
   }
 
   lines.push("");
+  const civicSource = block.civic?.source;
+  if (civicSource === "sf-311-live") {
+    lines.push(
+      `Civic cases are backed by SF Open Data (SF 311 dataset vw6y-z8j6).`
+    );
+  } else if (civicSource === "fixture-fallback") {
+    lines.push(`Civic cases are using the local demo fallback.`);
+  }
   lines.push(
     `The agent used the Viaduct graph. It did not call city services directly.`
   );

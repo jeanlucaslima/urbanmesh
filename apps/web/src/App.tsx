@@ -69,6 +69,16 @@ export default function App() {
       : "This role received a policy-filtered view."
     : null;
 
+  const civicSource = (result?.data as any)?.block?.civic?.source as
+    | string
+    | undefined;
+  const civicSourceLabel =
+    civicSource === "sf-311-live"
+      ? "SF 311 Cases — SF Open Data (live)"
+      : civicSource === "fixture-fallback"
+      ? "SF 311 Cases — local demo fallback"
+      : null;
+
   return (
     <div className="app">
       <header>
@@ -76,6 +86,9 @@ export default function App() {
         <p className="subtitle">Turning San Francisco into a GraphQL server.</p>
         <p className="tagline">
           One city question. Many civic domains. One Viaduct graph.
+        </p>
+        <p className="data-source">
+          Civic cases backed by <strong>SF 311 — SF Open Data</strong>.
         </p>
       </header>
 
@@ -156,6 +169,12 @@ export default function App() {
                 <strong>{result.executionMetadata.policyDecisions.length}</strong>{" "}
                 decisions
               </span>
+            </p>
+          )}
+
+          {civicSourceLabel && (
+            <p className="civic-source">
+              <strong>Civic source:</strong> {civicSourceLabel}
             </p>
           )}
 
