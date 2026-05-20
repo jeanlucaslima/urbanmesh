@@ -259,18 +259,42 @@ require_contains /tmp/a_admin.json '"blockedFields" *: *\[ *\]'
 # No-blocked answer language
 require_contains /tmp/a_admin.json 'No fields were blocked'
 
-section "[14/19] Agent /run missing customer ID"
+section "[14/19] Agent validation paths + envelope stability"
 
+# Missing customer ID
 curl -s -X POST "$AGENT/run" -H 'Content-Type: application/json' \
   -d '{"task":"Explain risk","actorRole":"AI_ASSISTANT"}' \
   > /tmp/a_missing.json
 require_contains /tmp/a_missing.json '"missing_customer_id"'
-# The envelope shape is stable: executionMetadata is null when the agent
-# never called Viaduct.
 require_contains /tmp/a_missing.json '"executionMetadata" *: *null'
-require_contains /tmp/a_missing.json '"validationError"'
 
-section "[15/19] Frontend reachable"
+# Invalid role
+curl -s -X POST "$AGENT/run" -H 'Content-Type: application/json' \
+  -d '{"task":"Explain customer C-1027 risk","actorRole":"GUEST"}' \
+  > /tmp/a_invrole.json
+require_contains /tmp/a_invrole.json '"invalid_actor_role"'
+require_contains /tmp/a_invrole.json '"executionMetadata" *: *null'
+
+# Multi-ID rejection
+curl -s -X POST "$AGENT/run" -H 'Content-Type: application/json' \
+  -d '{"task":"Compare C-1027 and C-1001","actorRole":"AI_ASSISTANT"}' \
+  > /tmp/a_multi.json
+require_contains /tmp/a_multi.json '"multiple_customer_ids"'
+require_contains /tmp/a_multi.json '"executionMetadata" *: *null'
+
+# Case-insensitive ID
+curl -s -X POST "$AGENT/run" -H 'Content-Type: application/json' \
+  -d '{"task":"explain customer c-1027 risk","actorRole":"AI_ASSISTANT"}' \
+  > /tmp/a_lower.json
+require_contains /tmp/a_lower.json '"id" *: *"C-1027"'
+require_contains /tmp/a_lower.json '"validationError" *: *null'
+
+# Stable envelope on success: every required key present.
+for k in answer query variables data executionMetadata validationError graphQLErrors; do
+  require_contains /tmp/a_ai.json "\"$k\""
+done
+
+section "[15/19] Frontend reachable + demo copy"
 
 curl -fsS http://localhost:3000 > /tmp/f_index.html
 require_contains /tmp/f_index.html '<div id="root">'
@@ -279,11 +303,35 @@ require_contains /tmp/f_index.html 'Viaduct Agent Demo'
 # Vite dev serves the SPA shell at /, with labels rendered by React.
 # Check the live App.tsx bundle for the role selector + button labels.
 curl -fsS http://localhost:3000/src/App.tsx > /tmp/f_app.tsx
+# Required UI controls
 require_contains /tmp/f_app.tsx 'Run through Viaduct'
 require_contains /tmp/f_app.tsx 'AI_ASSISTANT'
 require_contains /tmp/f_app.tsx 'SUPPORT_AGENT'
 require_contains /tmp/f_app.tsx 'FINANCE_AGENT'
 require_contains /tmp/f_app.tsx 'ADMIN'
+
+# PRD E §6 copy
+require_contains /tmp/f_app.tsx 'just another GraphQL client'
+require_contains /tmp/f_app.tsx 'One endpoint. Many services'
+
+# PRD E §6.2 architecture proof
+require_contains /tmp/f_app.tsx 'Architecture proof'
+require_contains /tmp/f_app.tsx 'No direct calls to'
+
+# PRD E §6.4 metadata panel labels
+require_contains /tmp/f_app.tsx 'Services coordinated by the graph'
+require_contains /tmp/f_app.tsx 'What the graph had to call'
+require_contains /tmp/f_app.tsx 'What policy removed'
+require_contains /tmp/f_app.tsx 'Why each sensitive field was allowed or denied'
+
+# PRD E §7 presets
+for label in 'Risk review' 'Admin view' 'Support situation' 'Billing risk' 'Healthy customer'; do
+  require_contains /tmp/f_app.tsx "$label"
+done
+
+# PRD E §8.3 role-contrast helper
+require_contains /tmp/f_app.tsx 'received the full sensitive context'
+require_contains /tmp/f_app.tsx 'received a policy-filtered view'
 
 section "[16/19] Architecture constraint: agent source"
 
