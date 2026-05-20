@@ -13,6 +13,13 @@
 | E-QA| Verify demo polish                                           | pending      |
 | F   | Rehearsal / failure-mode QA                                  | next         |
 
+## Current state
+
+PRD A through PRD D are complete and verified. **PRD E** (demo polish
++ talk alignment) is complete. **PRD E-QA** is pending — the verifier
+runs the live stack against the polish checklist. **PRD F** (rehearsal
+/ failure-mode QA) is next after PRD E-QA.
+
 ## Verification
 
 ```bash

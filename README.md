@@ -55,6 +55,9 @@ build if the agent or frontend source ever names an internal service.
 | D   | done     | agent orchestrator + frontend                     |
 | E   | done     | demo polish, presets, runbook                     |
 
+PRD E (demo polish + talk alignment) is complete. PRD F (rehearsal /
+failure-mode QA) is next.
+
 See `PROJECT_STATUS.md` and `docs/prds/PRD_INDEX.md`. For the on-stage
 sequence and fallback ladder, see [`docs/demo-runbook.md`](docs/demo-runbook.md).
 
