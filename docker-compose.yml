@@ -1,4 +1,22 @@
 services:
+  frontend:
+    build: ./apps/web
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_AGENT_URL: http://localhost:5005
+    depends_on:
+      - agent-orchestrator
+
+  agent-orchestrator:
+    build: ./apps/agent-orchestrator
+    ports:
+      - "5005:5005"
+    environment:
+      GRAPHQL_URL: http://viaduct-server:8080/graphql
+    depends_on:
+      - viaduct-server
+
   viaduct-server:
     build: ./viaduct-server
     ports:
