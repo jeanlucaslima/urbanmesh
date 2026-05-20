@@ -8,4 +8,12 @@ type Customer {
   name: String
   status: String
   riskLevel: String
+
+  billing: BillingAccount @resolver
+}
+
+type BillingAccount {
+  balance: Float
+  overdueInvoices: Int
+  paymentRisk: String
 }
